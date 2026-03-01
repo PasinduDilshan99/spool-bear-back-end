@@ -6,6 +6,26 @@ public class CommonResponseMessages {
     public static final String SUCCESSFULLY_INSERT_STATUS = "SUCCESSFULLY_INSERT";
     public static final String SUCCESSFULLY_INSERT_MESSAGE = "SUCCESSFULLY_INSERT";
 
+    public static final int SUCCESSFULLY_VALIDATE_CODE = 200;
+    public static final String SUCCESSFULLY_VALIDATE_STATUS = "SUCCESSFULLY_VALIDATE";
+    public static final String SUCCESSFULLY_VALIDATE_MESSAGE = "SUCCESSFULLY_VALIDATE";
+
+    public static final int UNSUCCESSFULLY_VALIDATE_CODE = 400;
+    public static final String UNSUCCESSFULLY_VALIDATE_STATUS = "UNSUCCESSFULLY_VALIDATE";
+    public static final String UNSUCCESSFULLY_VALIDATE_MESSAGE = "UNSUCCESSFULLY_VALIDATE";
+
+    public static final int SUCCESSFULLY_UPDATE_CODE = 200;
+    public static final String SUCCESSFULLY_UPDATE_STATUS = "SUCCESSFULLY_UPDATE";
+    public static final String SUCCESSFULLY_UPDATE_MESSAGE = "SUCCESSFULLY_UPDATE";
+
+    public static final int UNSUCCESSFULLY_UPDATE_CODE = 400;
+    public static final String UNSUCCESSFULLY_UPDATE_STATUS = "UNSUCCESSFULLY_UPDATE";
+    public static final String UNSUCCESSFULLY_UPDATE_MESSAGE = "UMSUCCESSFULLY_UPDATE";
+
+    public static final int SUCCESSFULLY_TERMINATE_CODE = 200;
+    public static final String SUCCESSFULLY_TERMINATE_STATUS = "SUCCESSFULLY_TERMINATE";
+    public static final String SUCCESSFULLY_TERMINATE_MESSAGE = "SUCCESSFULLY_TERMINATE";
+
     public static final int SUCCESSFULLY_LOGOUT_CODE = 200;
     public static final String SUCCESSFULLY_LOGOUT_STATUS = "SUCCESSFULLY_LOGOUT";
     public static final String SUCCESSFULLY_LOGOUT_MESSAGE = "SUCCESSFULLY_LOGOUT";
@@ -22,9 +42,10 @@ public class CommonResponseMessages {
     public static final String SUCCESSFULLY_RETRIEVE_STATUS = "SUCCESSFULLY_RETRIEVE";
     public static final String SUCCESSFULLY_RETRIEVE_MESSAGE = "SUCCESSFULLY_RETRIEVE";
 
-    public static final int DATA_RETRIEVE_FAILED_CODE = 200;
-    public static final String DATA_RETRIEVE_FAILED_STATUS = "SUCCESSFULLY_RETRIEVE";
-    public static final String DATA_RETRIEVE_FAILED_MESSAGE = "SUCCESSFULLY_RETRIEVE";
+
+    public static final int DATA_RETRIEVE_FAILED_CODE = 400;
+    public static final String DATA_RETRIEVE_FAILED_STATUS = "UNSUCCESSFULLY_RETRIEVE";
+    public static final String DATA_RETRIEVE_FAILED_MESSAGE = "UNSUCCESSFULLY_RETRIEVE";
 
     // BAD_REQUEST
     public static final int BAD_REQUEST_CODE = 404;
@@ -42,4 +63,10 @@ public class CommonResponseMessages {
     public static final int DATA_ACCESS_ERROR_CODE = 500;
     public static final String DATA_ACCESS_ERROR_STATUS = "DATA_ACCESS_ERROR";
     public static final String DATA_ACCESS_ERROR_MESSAGE = "DATA_ACCESS_ERROR";
+
+
+    public static final int USER_NOT_FOUND_ERROR_CODE = 401;
+    public static final String USER_NOT_FOUND_ERROR_STATUS = "USER_NOT_FOUND";
+    public static final String USER_NOT_FOUND_ERROR_MESSAGE = "USER_NOT_FOUND";
 }
+

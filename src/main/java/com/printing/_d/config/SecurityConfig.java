@@ -46,14 +46,6 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // DESTINATIONS
-                        .requestMatchers("/v0/api/destination/add-destination").hasAuthority("DESTINATION_CREATE")
-                        .requestMatchers("/v0/api/destination/update-destination").hasAuthority("DESTINATION_UPDATE")
-                        .requestMatchers("/v0/api/destination/terminate-destination").hasAuthority("DESTINATION_TERMINATE")
-                        // ACTIVITIES
-                        .requestMatchers("/api/v0/activities/terminate-activity").hasAuthority("ACTIVITY_TERMINATE")
-                        .requestMatchers(PublicEndpoints.ENDPOINTS).permitAll()
-                        .requestMatchers(AuthorizeEndPoints.ENDPOINTS).authenticated()
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
