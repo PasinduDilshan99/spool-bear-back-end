@@ -8,11 +8,11 @@
         <version>3.3.5</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.felicita</groupId>
+    <groupId>com.spoolbear</groupId>
     <artifactId>web-site-back-end</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>web-site-back-end</name>
-    <description>back end project for felicita web site</description>
+    <description>back end project for Spool Bear web site</description>
     <url/>
     <licenses>
         <license/>
