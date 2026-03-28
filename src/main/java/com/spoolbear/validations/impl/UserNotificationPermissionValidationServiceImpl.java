@@ -28,19 +28,19 @@ public class UserNotificationPermissionValidationServiceImpl implements UserNoti
 
     @Override
     public void validateUpdateUserNotificationPermissionRequest(UpdateUserNotificationPermissionRequest updateUserNotificationPermissionRequest) {
-        List<ValidationFailedResponse> validationFailedResponses = new ArrayList<>();
-        ValidationResultResponse name = commonValidationService.validateNotNullOrEmpty("name", updateUserNotificationPermissionRequest.getName());
-        if (!name.isValid()) {
-            validationFailedResponses.add(ValidationFailedResponse.builder().field(name.getField()).value(name.getMessage()).build());
-        }
-        ValidationResultResponse value = commonValidationService.validateBoolean("value", updateUserNotificationPermissionRequest.getValue());
-        if (!value.isValid()) {
-            validationFailedResponses.add(ValidationFailedResponse.builder().field(value.getField()).value(value.getMessage()).build());
-        }
-        LOGGER.info(validationFailedResponses.toString());
-        if (!validationFailedResponses.isEmpty()) {
-            throw new ValidationFailedErrorExceptionHandler("Validation failed : updateUserNotificationPermissionRequest", validationFailedResponses);
-        }
+//        List<ValidationFailedResponse> validationFailedResponses = new ArrayList<>();
+//        ValidationResultResponse name = commonValidationService.validateNotNullOrEmpty("name", updateUserNotificationPermissionRequest.getName());
+//        if (!name.isValid()) {
+//            validationFailedResponses.add(ValidationFailedResponse.builder().field(name.getField()).value(name.getMessage()).build());
+//        }
+//        ValidationResultResponse value = commonValidationService.validateBoolean("value", updateUserNotificationPermissionRequest.getValue());
+//        if (!value.isValid()) {
+//            validationFailedResponses.add(ValidationFailedResponse.builder().field(value.getField()).value(value.getMessage()).build());
+//        }
+//        LOGGER.info(validationFailedResponses.toString());
+//        if (!validationFailedResponses.isEmpty()) {
+//            throw new ValidationFailedErrorExceptionHandler("Validation failed : updateUserNotificationPermissionRequest", validationFailedResponses);
+//        }
     }
 
 }

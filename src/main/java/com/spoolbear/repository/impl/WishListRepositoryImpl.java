@@ -198,6 +198,8 @@ public class WishListRepositoryImpl implements WishListRepository {
                                                     ? rs.getTimestamp("created_at").toString()
                                                     : null
                                     )
+                                    .productUrl(rs.getString("product_id"))
+                                    .createdAt(rs.getTimestamp("created_at"))
                                     .status(rs.getString("status_name"))
                                     .productImages(new ArrayList<>())
                                     .build();

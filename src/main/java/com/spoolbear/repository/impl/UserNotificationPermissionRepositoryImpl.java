@@ -16,6 +16,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 public class UserNotificationPermissionRepositoryImpl implements UserNotificationPermissionRepository {
@@ -64,20 +65,20 @@ public class UserNotificationPermissionRepositoryImpl implements UserNotificatio
 
     @Override
     public void updateUserNotificationPermissionDetails(UpdateUserNotificationPermissionRequest request, Long userId) {
-        List<String> allowedColumns = List.of(
-                "new_products",
-                "tracking",
-                "product_status"
+        Map<String, String> columnMapping = Map.of(
+                "new_products_update", "new_products_update_at",
+                "tracking_update", "tracking_update_at",
+                "product_status_update", "product_status_update_at"
         );
 
         String columnName = request.getName();
         Object value = request.getValue();
 
-        if (!allowedColumns.contains(columnName)) {
+        if (!columnMapping.containsKey(columnName)) {
             throw new IllegalArgumentException("Invalid column name: " + columnName);
         }
 
-        String timestampColumn = columnName + "_updated_at";
+        String timestampColumn = columnMapping.get(columnName);
 
         String sql = "UPDATE user_notification_permission " +
                 "SET " + columnName + " = ?, " +

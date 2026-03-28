@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 @Data
@@ -22,5 +23,5 @@ public class WishListResponse {
     private String productUrl;
     private Double discount;
     private String status;
-    private String createdAt;
+    private Timestamp createdAt;
 }

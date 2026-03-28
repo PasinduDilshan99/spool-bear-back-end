@@ -47,7 +47,7 @@ public class UserProfileQueries {
                 gender_id = (SELECT gender_id FROM gender WHERE name = ? LIMIT 1),
                 email = ?,
                 mobile_number = ?,
-                region_id = (SELECT country_id FROM country WHERE name = ? LIMIT 1),
+                country_id = (SELECT country_id FROM country WHERE name = ? LIMIT 1),
                 date_of_birth = ?,
                 image_url = ?,
                 updated_at = CURRENT_TIMESTAMP
