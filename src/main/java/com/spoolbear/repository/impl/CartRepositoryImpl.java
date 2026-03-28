@@ -140,32 +140,217 @@ public class CartRepositoryImpl implements CartRepository {
     }
 
     @Override
-    public boolean addProductToCart(InsertItemToCartRequest insertItemToCartRequest) {
-        return false;
+    public boolean addProductToCart(InsertItemToCartRequest request) {
+        try {
+            LOGGER.info("Adding product to cart: {}", request);
+
+            // Step 1: Resolve color_id (can be null)
+            Long colorId = null;
+            if (request.getColor() != null) {
+                try {
+                    colorId = jdbcTemplate.queryForObject(
+                            CartQueries.GET_COLOR_ID_BY_NAME,
+                            new Object[]{request.getColor()},
+                            Long.class
+                    );
+                } catch (EmptyResultDataAccessException ex) {
+                    LOGGER.warn("Color not found: {}", request.getColor());
+                    throw new DataNotFoundErrorExceptionHandler("Color not found: " + request.getColor());
+                }
+            }
+            Long resolvedColorId = colorId;
+            int rowsAffected = jdbcTemplate.update(
+                    CartQueries.INSERT_CART_ITEM,
+                    ps -> {
+                        ps.setLong(1, request.getCartId());
+                        ps.setLong(2, request.getProductId());
+
+                        if (resolvedColorId != null) {
+                            ps.setLong(3, resolvedColorId);
+                        } else {
+                            ps.setNull(3, Types.BIGINT);
+                        }
+
+                        ps.setInt(4, request.getQuantity());
+
+                        if (request.getCartId() != null) {
+                            ps.setLong(5, request.getCartId());
+                        } else {
+                            ps.setNull(5, Types.BIGINT);
+                        }
+                    }
+            );
+
+            LOGGER.info("Product added to cart successfully. Rows affected: {}", rowsAffected);
+            return rowsAffected > 0;
+
+        } catch (DataNotFoundErrorExceptionHandler ex) {
+            throw ex;
+        } catch (DataAccessException ex) {
+            LOGGER.error("Database error while adding product to cart: {}", ex.getMessage(), ex);
+            throw new DataAccessErrorExceptionHandler("Failed to add product to cart");
+        } catch (Exception ex) {
+            LOGGER.error("Unexpected error: {}", ex.getMessage(), ex);
+            throw new InternalServerErrorExceptionHandler("Unexpected error occurred while adding product to cart");
+        }
     }
 
     @Override
     public void decreaseProductQuantityByOne(Long productId) {
+        try {
+            LOGGER.info("Decreasing stock for productId: {}", productId);
 
+            int rowsAffected = jdbcTemplate.update(CartQueries.DECREASE_PRODUCT_STOCK, productId);
+
+            if (rowsAffected == 0) {
+                LOGGER.warn("Product not found or stock already zero for productId: {}", productId);
+                throw new DataNotFoundErrorExceptionHandler("Product not found or stock is zero: " + productId);
+            }
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Database error while decreasing product stock: {}", ex.getMessage(), ex);
+            throw new DataAccessErrorExceptionHandler("Failed to decrease product stock");
+        } catch (Exception ex) {
+            LOGGER.error("Unexpected error while decreasing product stock: {}", ex.getMessage(), ex);
+            throw new InternalServerErrorExceptionHandler("Unexpected error occurred while decreasing product stock");
+        }
     }
 
     @Override
     public int getCurrentQuantity(Long cartItemId) {
-        return 0;
+        try {
+            LOGGER.info("Fetching current quantity for cartItemId: {}", cartItemId);
+
+            Integer quantity = jdbcTemplate.queryForObject(
+                    CartQueries.GET_CART_ITEM_QUANTITY,
+                    new Object[]{cartItemId},
+                    Integer.class
+            );
+
+            if (quantity == null) {
+                LOGGER.warn("Cart item not found or inactive: {}", cartItemId);
+                throw new DataNotFoundErrorExceptionHandler("Cart item not found or inactive: " + cartItemId);
+            }
+
+            return quantity;
+
+        } catch (EmptyResultDataAccessException ex) {
+            LOGGER.warn("Cart item not found: {}", cartItemId);
+            throw new DataNotFoundErrorExceptionHandler("Cart item not found: " + cartItemId);
+        } catch (DataAccessException ex) {
+            LOGGER.error("Database error while fetching cart item quantity: {}", ex.getMessage(), ex);
+            throw new DataAccessErrorExceptionHandler("Failed to fetch cart item quantity");
+        } catch (Exception ex) {
+            LOGGER.error("Unexpected error while fetching cart item quantity: {}", ex.getMessage(), ex);
+            throw new InternalServerErrorExceptionHandler("Unexpected error occurred while fetching cart item quantity");
+        }
     }
 
     @Override
     public void decreaseCartProductQuantityByOne(Long cartItemId) {
+        try {
+            LOGGER.info("Decreasing quantity for cartItemId: {}", cartItemId);
 
+            int rows = jdbcTemplate.update(
+                    CartQueries.DECREASE_QUANTITY,
+                    cartItemId
+            );
+
+            if (rows == 0) {
+                LOGGER.warn("No cart item found or quantity already zero: {}", cartItemId);
+                throw new DataNotFoundErrorExceptionHandler("Cart item not found or quantity already zero");
+            }
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Database error while decreasing quantity: {}", ex.getMessage(), ex);
+            throw new DataAccessErrorExceptionHandler("Failed to decrease cart item quantity");
+        } catch (Exception ex) {
+            LOGGER.error("Unexpected error: {}", ex.getMessage(), ex);
+            throw new InternalServerErrorExceptionHandler("Unexpected error occurred while decreasing quantity");
+        }
     }
 
     @Override
     public void increaseProductQuantityByOne(Long productId) {
+        try {
+            LOGGER.info("Increasing stock for productId: {}", productId);
 
+            int rowsAffected = jdbcTemplate.update(CartQueries.INCREASE_PRODUCT_STOCK, productId);
+
+            if (rowsAffected == 0) {
+                LOGGER.warn("Product not found to increase stock: {}", productId);
+                throw new DataNotFoundErrorExceptionHandler("Product not found: " + productId);
+            }
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Database error while increasing product stock: {}", ex.getMessage(), ex);
+            throw new DataAccessErrorExceptionHandler("Failed to increase product stock");
+        } catch (Exception ex) {
+            LOGGER.error("Unexpected error while increasing product stock: {}", ex.getMessage(), ex);
+            throw new InternalServerErrorExceptionHandler("Unexpected error occurred while increasing product stock");
+        }
     }
 
     @Override
     public void removeProductFromCart(Long cartItemId) {
+        try {
+            LOGGER.info("Removing cart item (soft delete) for cartItemId: {}", cartItemId);
 
+            // Step 1: Get TERMINATED status ID
+            Integer terminatedStatusId = jdbcTemplate.queryForObject(
+                    CartQueries.GET_TERMINATED_STATUS_ID,
+                    Integer.class
+            );
+
+            if (terminatedStatusId == null) {
+                throw new DataNotFoundErrorExceptionHandler("TERMINATED status not found");
+            }
+
+            // Step 2: Update status
+            int rows = jdbcTemplate.update(
+                    CartQueries.REMOVE_CART_ITEM,
+                    terminatedStatusId,
+                    cartItemId
+            );
+
+            if (rows == 0) {
+                LOGGER.warn("Cart item not found: {}", cartItemId);
+                throw new DataNotFoundErrorExceptionHandler("Cart item not found");
+            }
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Database error while removing cart item: {}", ex.getMessage(), ex);
+            throw new DataAccessErrorExceptionHandler("Failed to remove cart item");
+        } catch (Exception ex) {
+            LOGGER.error("Unexpected error: {}", ex.getMessage(), ex);
+            throw new InternalServerErrorExceptionHandler("Unexpected error occurred while removing cart item");
+        }
+    }
+
+    @Override
+    public boolean increaseCartProductQuantityByOne(Long cartItemId) {
+        try {
+            LOGGER.info("Increasing quantity for cartItemId: {}", cartItemId);
+
+            int rowsAffected = jdbcTemplate.update(
+                    CartQueries.INCREASE_QUANTITY,
+                    cartItemId
+            );
+
+            if (rowsAffected == 0) {
+                LOGGER.warn("No active cart item found to increase quantity: {}", cartItemId);
+                throw new DataNotFoundErrorExceptionHandler("Cart item not found or not active");
+            }
+
+            LOGGER.info("Quantity increased successfully for cartItemId: {}", cartItemId);
+            return true;
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Database error while increasing cart item quantity: {}", ex.getMessage(), ex);
+            throw new DataAccessErrorExceptionHandler("Failed to increase cart item quantity");
+        } catch (Exception ex) {
+            LOGGER.error("Unexpected error while increasing cart item quantity: {}", ex.getMessage(), ex);
+            throw new InternalServerErrorExceptionHandler("Unexpected error occurred while increasing cart item quantity");
+        }
     }
 }

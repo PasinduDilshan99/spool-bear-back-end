@@ -21,4 +21,6 @@ public interface CartRepository {
     void increaseProductQuantityByOne(Long productId);
 
     void removeProductFromCart(Long cartItemId);
+
+    boolean increaseCartProductQuantityByOne(Long cartItemId);
 }

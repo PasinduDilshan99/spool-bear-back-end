@@ -147,8 +147,8 @@ public class JwtServiceImpl implements JwtService {
                 .secure(false)
                 .path("/")
                 .maxAge(Duration.ofSeconds(accessCookieMaxAge))
-                .sameSite("Lax")
-                .domain(".spoolbear.com")
+                .sameSite("Strict")
+//                .domain(".spoolbear.com")
                 .build();
     }
 
@@ -159,8 +159,8 @@ public class JwtServiceImpl implements JwtService {
                 .secure(false)
                 .path("/")
                 .maxAge(Duration.ofSeconds(refreshCookieMaxAge))
-                .sameSite("Lax")
-                .domain(".spoolbear.com")
+                .sameSite("Strict")
+//                .domain(".spoolbear.com")
                 .build();
     }
 
@@ -218,8 +218,8 @@ public class JwtServiceImpl implements JwtService {
                 .secure(false)
                 .path("/")
                 .maxAge(0)
-                .sameSite("Lax")
-                .domain(".spoolbear.com")
+                .sameSite("Strict")
+//                .domain(".spoolbear.com")
                 .build();
     }
 
@@ -230,8 +230,8 @@ public class JwtServiceImpl implements JwtService {
                 .secure(false)
                 .path("/")
                 .maxAge(0)
-                .sameSite("Lax")
-                .domain(".spoolbear.com")
+                .sameSite("Strict")
+//                .domain(".spoolbear.com")
                 .build();
     }
 }

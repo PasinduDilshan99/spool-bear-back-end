@@ -87,7 +87,14 @@ public class CartServiceImpl implements CartService {
                     productsCartResponses,
                     Instant.now());
 
-        } catch (DataNotFoundErrorExceptionHandler | DataAccessErrorExceptionHandler e) {
+        } catch (DataNotFoundErrorExceptionHandler e) {
+            return new CommonResponse<>(
+                    CommonResponseMessages.DATA_NOT_FOUND_CODE,
+                    CommonResponseMessages.DATA_NOT_FOUND_STATUS,
+                    CommonResponseMessages.DATA_NOT_FOUND_MESSAGE,
+                    new ArrayList<>(),
+                    Instant.now());
+        } catch (DataAccessErrorExceptionHandler e) {
             throw e;
         } catch (Exception e) {
             LOGGER.error("Error occurred while fetching products: {}", e.getMessage(), e);
@@ -102,7 +109,25 @@ public class CartServiceImpl implements CartService {
         LOGGER.info("Start add product to cart from repository");
         try {
             cartValidationService.validateInsertItemToCartRequest(insertItemToCartRequest);
-            boolean isSuccessfullyAdded = cartRepository.addProductToCart(insertItemToCartRequest);
+
+            List<ProductsCartResponse> currentProducts = fetchCart(
+                    new FetchCartRequest(insertItemToCartRequest.getCartId())
+            ).getData();
+
+            boolean isSuccessfullyAdded = false;
+
+            for (ProductsCartResponse product : currentProducts) {
+                if (product.getProductId().equals(insertItemToCartRequest.getProductId()) &&
+                        product.getColor().equals(insertItemToCartRequest.getColor())) {
+                    isSuccessfullyAdded = cartRepository.increaseCartProductQuantityByOne(product.getCartItemId());
+                    break;
+                }
+            }
+
+            if (!isSuccessfullyAdded) {
+                isSuccessfullyAdded = cartRepository.addProductToCart(insertItemToCartRequest);
+            }
+
 
             if (isSuccessfullyAdded) {
                 cartRepository.decreaseProductQuantityByOne(insertItemToCartRequest.getProductId());
@@ -178,12 +203,11 @@ public class CartServiceImpl implements CartService {
                     cartRepository.removeProductFromCart(productsCartResponse.getCartItemId());
                     cartRepository.increaseProductQuantityByOne(productsCartResponse.getProductId());
                 } else if (productQuantity > 1) {
-                    for (int i = 0; i < productQuantity - 1; i++) {
+                    for (int i = 0; i < productQuantity; i++) {
                         cartRepository.decreaseCartProductQuantityByOne(productsCartResponse.getCartItemId());
                         cartRepository.increaseProductQuantityByOne(productsCartResponse.getProductId());
                     }
                     cartRepository.removeProductFromCart(productsCartResponse.getCartItemId());
-                    cartRepository.increaseProductQuantityByOne(productsCartResponse.getProductId());
                 }
             }
 
