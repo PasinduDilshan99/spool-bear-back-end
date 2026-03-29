@@ -37,7 +37,7 @@ public class GalleryRepositoryImpl implements GalleryRepository {
                 gallery.setImageId(rs.getInt("image_id"));
                 gallery.setImageName(rs.getString("image_name"));
                 gallery.setImageDescription(rs.getString("image_description"));
-                gallery.setLocation(rs.getString("location"));
+                gallery.setMaterial(rs.getString("material"));
                 gallery.setImageLink(rs.getString("image_link"));
                 gallery.setImageOwner(rs.getString("image_owner"));
                 gallery.setImageSource(rs.getString("image_source"));

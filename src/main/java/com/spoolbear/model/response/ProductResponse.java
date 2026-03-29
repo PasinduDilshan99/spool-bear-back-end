@@ -21,6 +21,8 @@ public class ProductResponse {
     private Integer stockQuantity;
     private Boolean isCustomizable;
 
+    private Boolean isWish = false;
+
     private Long typeId;
     private String typeName;
 
@@ -30,6 +32,7 @@ public class ProductResponse {
 
     private Long categoryId;
     private String categoryName;
+    private List<String> colors;
     private List<ProductImage> images;
 
     @Data

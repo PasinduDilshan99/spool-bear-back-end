@@ -13,7 +13,7 @@ public class GalleryResponse {
     private Integer imageId;
     private String imageName;
     private String imageDescription;
-    private String location;
+    private String material;
     private String imageLink;
     private String imageOwner;
     private String imageSource;

@@ -1,5 +1,6 @@
 package com.spoolbear.controller;
 
+import com.spoolbear.model.request.ProductDetailsRequest;
 import com.spoolbear.model.request.ProductsFilterRequest;
 import com.spoolbear.model.response.CommonResponse;
 import com.spoolbear.model.response.ProductResponse;
@@ -32,6 +33,14 @@ public class ProductsController {
         LOGGER.info("{} Start execute get active products {}", Constant.DOTS, Constant.DOTS);
         CommonResponse<List<ProductResponse>> response = productsService.getActiveProducts(productsFilterRequest);
         LOGGER.info("{} End execute get active products {}", Constant.DOTS, Constant.DOTS);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/product-details")
+    public ResponseEntity<CommonResponse<ProductResponse>> getProductDetailsById(@RequestBody ProductDetailsRequest productDetailsRequest) {
+        LOGGER.info("{} Start execute get product details by id {}", Constant.DOTS, Constant.DOTS);
+        CommonResponse<ProductResponse> response = productsService.getProductDetailsById(productDetailsRequest);
+        LOGGER.info("{} End execute get product details by id {}", Constant.DOTS, Constant.DOTS);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
