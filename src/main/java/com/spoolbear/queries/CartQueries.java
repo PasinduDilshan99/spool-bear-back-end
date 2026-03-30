@@ -51,7 +51,17 @@ public class CartQueries {
     SELECT id FROM common_status WHERE name = 'TERMINATED' LIMIT 1
 """;
 
+    public static final String GET_BOUGHT_STATUS_ID = """
+    SELECT id FROM common_status WHERE name = 'BOUGHT' LIMIT 1
+""";
+
     public static final String REMOVE_CART_ITEM = """
+    UPDATE cart_items
+    SET status = ?
+    WHERE cart_item_id = ?
+""";
+
+    public static final String BOUGHT_CART_ITEM = """
     UPDATE cart_items
     SET status = ?
     WHERE cart_item_id = ?
@@ -81,4 +91,7 @@ public class CartQueries {
     WHERE cart_item_id = ? 
       AND (status IS NULL OR status = 1)
 """;
+    public static final String REMOVE_PRODUCT_ALL_ITEMS = """
+            SELECT 
+            """;
 }

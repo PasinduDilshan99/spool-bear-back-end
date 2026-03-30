@@ -6,6 +6,7 @@ import com.spoolbear.exception.InternalServerErrorExceptionHandler;
 import com.spoolbear.model.dto.OrderInsertRequestDto;
 import com.spoolbear.model.dto.OrderMainDetailsDto;
 import com.spoolbear.model.dto.PrintingOrderInsertRequestDto;
+import com.spoolbear.model.request.ProductOrderInsertRequest;
 import com.spoolbear.model.response.OrderResponse;
 import com.spoolbear.model.response.ProductsCartResponse;
 import com.spoolbear.queries.CartQueries;
@@ -257,6 +258,54 @@ public class OrderRepositoryImpl implements OrderRepository {
             LOGGER.error("Unexpected error while creating order for userId {}: {}",
                     dto.getUserId(), ex.getMessage(), ex);
             throw new InternalServerErrorExceptionHandler("Unexpected error occurred while creating order");
+        }
+    }
+
+    @Override
+    public boolean addProductOrder(ProductOrderInsertRequest.OrderProducts orderProducts,
+                                   Long orderId,
+                                   Long userId) {
+
+        Long colorId = null;
+        if (orderProducts.getColor() != null) {
+            try {
+                colorId = jdbcTemplate.queryForObject(
+                        CartQueries.GET_COLOR_ID_BY_NAME,
+                        new Object[]{orderProducts.getColor()},
+                        Long.class
+                );
+            } catch (EmptyResultDataAccessException ex) {
+                LOGGER.warn("Color not found: {}", orderProducts.getColor());
+                throw new DataNotFoundErrorExceptionHandler("Color not found: " + orderProducts.getColor());
+            }
+        }
+        try {
+            String sql = """
+            INSERT INTO order_items (
+                order_id,
+                product_id,
+                quantity,
+                price,
+                created_by,
+                color_id
+            ) VALUES (?, ?, ?, ?, ?, ?)
+        """;
+
+            int rows = jdbcTemplate.update(
+                    sql,
+                    orderId,
+                    orderProducts.getProductId(),
+                    orderProducts.getQuantity(),
+                    orderProducts.getPrice(),
+                    userId,
+                    colorId
+            );
+
+            return rows > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
     }
 

@@ -4,10 +4,7 @@ import com.spoolbear.model.request.FetchCartRequest;
 import com.spoolbear.model.request.InsertItemToCartRequest;
 import com.spoolbear.model.request.RemoveAllFromCartRequest;
 import com.spoolbear.model.request.RemoveItemFromCartRequest;
-import com.spoolbear.model.response.CartCreateResponse;
-import com.spoolbear.model.response.CommonResponse;
-import com.spoolbear.model.response.ProductsCartResponse;
-import com.spoolbear.model.response.RemoveAllProductsResponse;
+import com.spoolbear.model.response.*;
 
 import java.util.List;
 
@@ -21,4 +18,10 @@ public interface CartService {
     CommonResponse<List<ProductsCartResponse>> removeProductFromCart(RemoveItemFromCartRequest removeItemFromCartRequest);
 
     CommonResponse<RemoveAllProductsResponse> removeAllFromCart(RemoveAllFromCartRequest removeAllFromCartRequest);
+
+    CommonResponse<CartIdResponse> fetchCartId();
+
+    CommonResponse<List<ProductsCartResponse>> removeProductAllItemsFromCart(RemoveItemFromCartRequest removeItemFromCartRequest);
+
+    void boughtProductAllItemsFromCart(Long cartItemId);
 }

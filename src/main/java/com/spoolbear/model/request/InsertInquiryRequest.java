@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class InsertInquiryRequest {
     private String name;
     private String email;
+    private String contactNumber;
     private String subject;
     private String message;
 }

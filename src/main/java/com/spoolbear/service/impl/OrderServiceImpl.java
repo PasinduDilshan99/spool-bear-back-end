@@ -12,11 +12,15 @@ import com.spoolbear.model.enums.OrderTypes;
 import com.spoolbear.model.enums.PaymentStatus;
 import com.spoolbear.model.request.DesignOrderInsertRequest;
 import com.spoolbear.model.request.PrintingOrderInsertRequest;
+import com.spoolbear.model.request.ProductOrderInsertRequest;
+import com.spoolbear.model.request.RemoveItemFromCartRequest;
 import com.spoolbear.model.response.CommonResponse;
 import com.spoolbear.model.response.InsertResponse;
 import com.spoolbear.model.response.OrderResponse;
 import com.spoolbear.model.response.ProductResponse;
+import com.spoolbear.repository.CartRepository;
 import com.spoolbear.repository.OrderRepository;
+import com.spoolbear.service.CartService;
 import com.spoolbear.service.CommonService;
 import com.spoolbear.service.OrderService;
 import com.spoolbear.util.CommonResponseMessages;
@@ -38,12 +42,14 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final CommonService commonService;
     private final OrderValidationService orderValidationService;
+    private final CartService cartService;
 
     @Autowired
-    public OrderServiceImpl(OrderRepository orderRepository, CommonService commonService, OrderValidationService orderValidationService) {
+    public OrderServiceImpl(OrderRepository orderRepository, CommonService commonService, OrderValidationService orderValidationService, CartService cartService) {
         this.orderRepository = orderRepository;
         this.commonService = commonService;
         this.orderValidationService = orderValidationService;
+        this.cartService = cartService;
     }
 
     @Override
@@ -225,6 +231,45 @@ public class OrderServiceImpl implements OrderService {
             throw new InternalServerErrorExceptionHandler("Failed to add design order");
         } finally {
             LOGGER.info("End add design order");
+        }
+    }
+
+    @Override
+    public CommonResponse<InsertResponse> addProductOrder(ProductOrderInsertRequest productOrderInsertRequest) {
+        LOGGER.info("Start add product order.");
+        try {
+            Long userId = commonService.getUserIdBySecurityContext();
+            orderValidationService.validateProductOrderInsertRequest(productOrderInsertRequest);
+            Long orderId = orderRepository.addOrder(
+                    new OrderInsertRequestDto(
+                            userId,
+                            productOrderInsertRequest.getTotalAmount(),
+                            OrderStatus.REQUESTED.toString(),
+                            1,
+                            OrderTypes.PRODUCT.toString(),
+                            PaymentStatus.PENDING.toString()
+                    ));
+            for (ProductOrderInsertRequest.OrderProducts orderProducts : productOrderInsertRequest.getProducts()) {
+                boolean isSuccess = orderRepository.addProductOrder(orderProducts, orderId, userId);
+                if (isSuccess) {
+                    cartService.boughtProductAllItemsFromCart(orderProducts.getCartItemId());
+                }
+            }
+
+            return new CommonResponse<>(
+                    CommonResponseMessages.SUCCESSFULLY_INSERT_CODE,
+                    CommonResponseMessages.SUCCESSFULLY_INSERT_STATUS,
+                    CommonResponseMessages.SUCCESSFULLY_INSERT_MESSAGE,
+                    new InsertResponse("Product Order Added Successfully"),
+                    Instant.now());
+
+        } catch (DataNotFoundErrorExceptionHandler | DataAccessErrorExceptionHandler e) {
+            throw e;
+        } catch (Exception e) {
+            LOGGER.error("Error occurred while add product order: {}", e.getMessage(), e);
+            throw new InternalServerErrorExceptionHandler("Failed to add product order");
+        } finally {
+            LOGGER.info("End add product order");
         }
     }
 }

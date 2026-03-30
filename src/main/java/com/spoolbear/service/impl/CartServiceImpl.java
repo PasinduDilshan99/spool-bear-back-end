@@ -227,5 +227,81 @@ public class CartServiceImpl implements CartService {
             LOGGER.info("End remove all products from repository");
         }
     }
+
+    @Override
+    public CommonResponse<CartIdResponse> fetchCartId() {
+        LOGGER.info("Start fetch cart id from repository");
+        try {
+            Long userId = null;
+            userId = commonService.getUserIdBySecurityContextWithOutException();
+            if (userId != null) {
+                Long cartId = null;
+                cartId = cartRepository.fetchCartId(userId);
+                if (cartId != null) {
+                    return new CommonResponse<>(
+                            CommonResponseMessages.SUCCESSFULLY_RETRIEVE_CODE,
+                            CommonResponseMessages.SUCCESSFULLY_RETRIEVE_STATUS,
+                            CommonResponseMessages.SUCCESSFULLY_RETRIEVE_MESSAGE,
+                            new CartIdResponse(cartId),
+                            Instant.now());
+                }
+            }
+            return new CommonResponse<>(
+                    CommonResponseMessages.SUCCESSFULLY_RETRIEVE_CODE,
+                    CommonResponseMessages.SUCCESSFULLY_RETRIEVE_STATUS,
+                    CommonResponseMessages.SUCCESSFULLY_RETRIEVE_MESSAGE,
+                    new CartIdResponse(null),
+                    Instant.now());
+
+
+        } catch (DataNotFoundErrorExceptionHandler | DataAccessErrorExceptionHandler e) {
+            throw e;
+        } catch (Exception e) {
+            LOGGER.error("Error occurred while remove product: {}", e.getMessage(), e);
+            throw new InternalServerErrorExceptionHandler("Failed to remove product from database");
+        } finally {
+            LOGGER.info("End remove product from repository");
+        }
+    }
+
+    @Override
+    public CommonResponse<List<ProductsCartResponse>> removeProductAllItemsFromCart(RemoveItemFromCartRequest removeItemFromCartRequest) {
+        LOGGER.info("Start remove product all items in cart from repository");
+        try {
+            cartValidationService.validateRemoveItemFromCartRequest(removeItemFromCartRequest);
+            cartRepository.removeProductFromCart(removeItemFromCartRequest.getCartItemId());
+            List<ProductsCartResponse> products = fetchCart(new FetchCartRequest(removeItemFromCartRequest.getCartId())).getData();
+
+            return new CommonResponse<>(
+                    CommonResponseMessages.SUCCESSFULLY_REMOVE_CODE,
+                    CommonResponseMessages.SUCCESSFULLY_REMOVE_STATUS,
+                    CommonResponseMessages.SUCCESSFULLY_REMOVE_MESSAGE,
+                    products,
+                    Instant.now());
+
+        } catch (DataNotFoundErrorExceptionHandler | DataAccessErrorExceptionHandler e) {
+            throw e;
+        } catch (Exception e) {
+            LOGGER.error("Error occurred while remove product: {}", e.getMessage(), e);
+            throw new InternalServerErrorExceptionHandler("Failed to remove product from database");
+        } finally {
+            LOGGER.info("End remove product all items from repository");
+        }
+    }
+
+    @Override
+    public void boughtProductAllItemsFromCart(Long cartItemId) {
+        LOGGER.info("Start bought product all items in cart from repository");
+        try {
+            cartRepository.boughtProductAllItemsFromCart(cartItemId);
+        } catch (DataNotFoundErrorExceptionHandler | DataAccessErrorExceptionHandler e) {
+            throw e;
+        } catch (Exception e) {
+            LOGGER.error("Error occurred while bought product: {}", e.getMessage(), e);
+            throw new InternalServerErrorExceptionHandler("Failed to bought product from database");
+        } finally {
+            LOGGER.info("End bought product all items from repository");
+        }
+    }
 }
 

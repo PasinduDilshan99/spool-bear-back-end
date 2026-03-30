@@ -3,6 +3,7 @@ package com.spoolbear.repository;
 import com.spoolbear.model.dto.OrderInsertRequestDto;
 import com.spoolbear.model.dto.OrderMainDetailsDto;
 import com.spoolbear.model.dto.PrintingOrderInsertRequestDto;
+import com.spoolbear.model.request.ProductOrderInsertRequest;
 import com.spoolbear.model.response.OrderResponse;
 
 import java.util.List;
@@ -19,4 +20,6 @@ public interface OrderRepository {
     void addPrintingOrderFile(String fileName, String fileUrl, Long printOrderId, Long userId);
 
     Long addOrder(OrderInsertRequestDto orderInsertRequestDto);
+
+    boolean addProductOrder(ProductOrderInsertRequest.OrderProducts orderProducts, Long orderId, Long userId);
 }

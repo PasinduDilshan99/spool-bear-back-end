@@ -23,9 +23,9 @@ public class ContactUsRepositoryImpl implements ContactUsRepository {
     @Override
     public boolean addInquiry(InsertInquiryRequest insertInquiryRequest) {
         String sql = """
-            INSERT INTO inquiries (name, email, subject, message, status_id, isCheck)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """;
+                    INSERT INTO inquiries (name, email, subject, message, status_id, isCheck,contact_number)
+                    VALUES (?, ?, ?, ?, ?, ?,?)
+                """;
 
         int rowsAffected = jdbcTemplate.update(
                 sql,
@@ -34,7 +34,8 @@ public class ContactUsRepositoryImpl implements ContactUsRepository {
                 insertInquiryRequest.getSubject(),
                 insertInquiryRequest.getMessage(),
                 1,
-                false
+                false,
+                insertInquiryRequest.getContactNumber()
         );
 
         return rowsAffected > 0;

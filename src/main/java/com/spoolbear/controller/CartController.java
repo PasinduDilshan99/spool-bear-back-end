@@ -37,6 +37,15 @@ public class CartController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @GetMapping(path = "/fetch-cart-id")
+    public ResponseEntity<CommonResponse<CartIdResponse>> fetchCartId() {
+        LOGGER.info("{} Start execute fetch cart id {}", Constant.DOTS, Constant.DOTS);
+        CommonResponse<CartIdResponse> response = cartService.fetchCartId();
+        LOGGER.info("{} End execute fetch cart id {}", Constant.DOTS, Constant.DOTS);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
     @PostMapping(path = "/fetch")
     public ResponseEntity<CommonResponse<List<ProductsCartResponse>>> fetchCart(@RequestBody FetchCartRequest fetchCartRequest) {
         LOGGER.info("{} Start execute fetch cart {}", Constant.DOTS, Constant.DOTS);
@@ -58,6 +67,14 @@ public class CartController {
         LOGGER.info("{} Start execute remove product from cart {}", Constant.DOTS, Constant.DOTS);
         CommonResponse<List<ProductsCartResponse>> response = cartService.removeProductFromCart(removeItemFromCartRequest);
         LOGGER.info("{} End execute remove product from cart {}", Constant.DOTS, Constant.DOTS);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/remove-product-all-items")
+    public ResponseEntity<CommonResponse<List<ProductsCartResponse>>> removeProductAllItemsFromCart(@RequestBody RemoveItemFromCartRequest removeItemFromCartRequest) {
+        LOGGER.info("{} Start execute remove product all items from cart {}", Constant.DOTS, Constant.DOTS);
+        CommonResponse<List<ProductsCartResponse>> response = cartService.removeProductAllItemsFromCart(removeItemFromCartRequest);
+        LOGGER.info("{} End execute remove product all items from cart {}", Constant.DOTS, Constant.DOTS);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

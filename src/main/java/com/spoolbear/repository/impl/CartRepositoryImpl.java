@@ -7,6 +7,7 @@ import com.spoolbear.exception.DataAccessErrorExceptionHandler;
 import com.spoolbear.exception.DataNotFoundErrorExceptionHandler;
 import com.spoolbear.exception.InternalServerErrorExceptionHandler;
 import com.spoolbear.model.request.InsertItemToCartRequest;
+import com.spoolbear.model.request.RemoveItemFromCartRequest;
 import com.spoolbear.model.response.BlogResponse;
 import com.spoolbear.model.response.ProductsCartResponse;
 import com.spoolbear.queries.BlogQueries;
@@ -353,4 +354,55 @@ public class CartRepositoryImpl implements CartRepository {
             throw new InternalServerErrorExceptionHandler("Unexpected error occurred while increasing cart item quantity");
         }
     }
+
+    @Override
+    public Long fetchCartId(Long userId) {
+        String sql = "SELECT c.cart_id FROM cart c WHERE c.user_id = ? LIMIT 1";
+
+        try {
+            return jdbcTemplate.queryForObject(
+                    sql,
+                    new Object[]{userId},
+                    Long.class
+            );
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public void boughtProductAllItemsFromCart(Long cartItemId) {
+        try {
+            LOGGER.info("bought cart item (soft delete) for cartItemId: {}", cartItemId);
+
+            Integer boughtStatusId = jdbcTemplate.queryForObject(
+                    CartQueries.GET_BOUGHT_STATUS_ID,
+                    Integer.class
+            );
+
+            if (boughtStatusId == null) {
+                throw new DataNotFoundErrorExceptionHandler("BOUGHT status not found");
+            }
+
+            // Step 2: Update status
+            int rows = jdbcTemplate.update(
+                    CartQueries.BOUGHT_CART_ITEM,
+                    boughtStatusId,
+                    cartItemId
+            );
+
+            if (rows == 0) {
+                LOGGER.warn("Cart item not found: {}", cartItemId);
+                throw new DataNotFoundErrorExceptionHandler("Cart item not found");
+            }
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Database error while removing cart item: {}", ex.getMessage(), ex);
+            throw new DataAccessErrorExceptionHandler("Failed to remove cart item");
+        } catch (Exception ex) {
+            LOGGER.error("Unexpected error: {}", ex.getMessage(), ex);
+            throw new InternalServerErrorExceptionHandler("Unexpected error occurred while removing cart item");
+        }
+    }
+
 }

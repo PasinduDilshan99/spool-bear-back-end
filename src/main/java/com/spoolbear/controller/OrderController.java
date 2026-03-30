@@ -2,6 +2,7 @@ package com.spoolbear.controller;
 
 import com.spoolbear.model.request.DesignOrderInsertRequest;
 import com.spoolbear.model.request.PrintingOrderInsertRequest;
+import com.spoolbear.model.request.ProductOrderInsertRequest;
 import com.spoolbear.model.request.ProductsFilterRequest;
 import com.spoolbear.model.response.CommonResponse;
 import com.spoolbear.model.response.InsertResponse;
@@ -36,6 +37,14 @@ public class OrderController {
         LOGGER.info("{} Start execute get orders by user id {}", Constant.DOTS, Constant.DOTS);
         CommonResponse<List<OrderResponse>> response = orderService.getOrderByuser();
         LOGGER.info("{} End execute get orders by user id  {}", Constant.DOTS, Constant.DOTS);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/add-product-order")
+    public ResponseEntity<CommonResponse<InsertResponse>> addProductOrder(@RequestBody ProductOrderInsertRequest productOrderInsertRequest) {
+        LOGGER.info("{} Start execute add product order  {}", Constant.DOTS, Constant.DOTS);
+        CommonResponse<InsertResponse> response = orderService.addProductOrder(productOrderInsertRequest);
+        LOGGER.info("{} End execute add product order {}", Constant.DOTS, Constant.DOTS);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

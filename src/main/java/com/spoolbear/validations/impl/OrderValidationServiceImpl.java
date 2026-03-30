@@ -2,6 +2,7 @@ package com.spoolbear.validations.impl;
 
 import com.spoolbear.model.request.DesignOrderInsertRequest;
 import com.spoolbear.model.request.PrintingOrderInsertRequest;
+import com.spoolbear.model.request.ProductOrderInsertRequest;
 import com.spoolbear.validations.CommonValidationService;
 import com.spoolbear.validations.OrderValidationService;
 import org.slf4j.Logger;
@@ -28,6 +29,11 @@ public class OrderValidationServiceImpl implements OrderValidationService {
 
     @Override
     public void validateDesignOrderInsertRequest(DesignOrderInsertRequest designOrderInsertRequest) {
+
+    }
+
+    @Override
+    public void validateProductOrderInsertRequest(ProductOrderInsertRequest productOrderInsertRequest) {
 
     }
 }
