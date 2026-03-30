@@ -3,9 +3,17 @@ package com.spoolbear.queries;
 public class ReviewQueries {
     public static final String GET_REVIEW_DETAILS = """
             SELECT
-            	pr.review_id AS review_id,
-            	p.product_id AS product_id,
-            	p.name AS product_name,
+                pr.review_id AS review_id,
+                pr.order_id AS order_id,
+                pr.order_type AS order_type,
+                CASE
+                    WHEN pr.order_type = 'PRINTING' THEN po.printing_order_id
+                    ELSE p.product_id
+                END AS product_id,
+                CASE
+                    WHEN pr.order_type = 'PRINTING' THEN po.custom_text
+                    ELSE p.name
+                END AS product_name,
             	pr.comment AS comment,
             	pr.rating,
             	cs_pr.name AS review_status,
@@ -70,14 +78,24 @@ public class ReviewQueries {
             	ON u3.user_id = prcr.user_id
             LEFT JOIN common_status cs_prcr
             	ON cs_prcr.id = prcr.status
+            LEFT JOIN printing_orders po
+                ON po.order_id = pr.order_id
             ORDER BY pr.review_id, prc.id, prcr.id
             """;
 
     public static final String GET_REVIEW_DETAILS_BY_ID = """
             SELECT
-            	pr.review_id AS review_id,
-            	p.product_id AS product_id,
-            	p.name AS product_name,
+                pr.review_id AS review_id,
+                pr.order_id AS order_id,
+                pr.order_type AS order_type,
+                CASE
+                    WHEN pr.order_type = 'PRINTING' THEN po.printing_order_id
+                    ELSE p.product_id
+                END AS product_id,
+                CASE
+                    WHEN pr.order_type = 'PRINTING' THEN po.custom_text
+                    ELSE p.name
+                END AS product_name,
             	pr.comment AS comment,
             	pr.rating,
             	cs_pr.name AS review_status,
@@ -142,7 +160,86 @@ public class ReviewQueries {
             	ON u3.user_id = prcr.user_id
             LEFT JOIN common_status cs_prcr
             	ON cs_prcr.id = prcr.status
+            LEFT JOIN printing_orders po
+                ON po.order_id = pr.order_id
             WHERE pr.user_id = ? 
             ORDER BY pr.review_id, prc.id, prcr.id
+            """;
+    public static final String GET_REVIEW_PREVIOUS_REACT = """
+            SELECT
+            	prr.product_review_id,
+                prr.user_id,
+                rt.name,
+                prr.status
+            FROM product_review_reaction prr
+            LEFT JOIN reaction_type rt ON prr.reaction_type_id = rt.id
+            WHERE prr.product_review_id = ? AND prr.user_id = ?
+            """;
+    public static final String ADD_REACTION_TO_REVIEW = """
+            INSERT INTO product_review_reaction (product_review_id, user_id, reaction_type_id, status, created_by)
+            SELECT
+                ?,
+                ?,
+                rt.id,
+                1,
+                ?
+            FROM reaction_type rt
+            WHERE rt.name = ?
+              AND rt.status = 1
+            """;
+    public static final String REMOVE_REVIEW_REACTION = """
+            UPDATE product_review_reaction
+            SET status = 2,
+                terminated_at = CURRENT_TIMESTAMP,
+                terminated_by = ?
+            WHERE product_review_id = ? AND user_id = ? AND status = 1
+            """ ;
+    public static final String INSERT_REVIEW_COMMENT = """
+            INSERT INTO product_review_comment (
+                product_review_id,
+                user_id,
+                parent_comment_id,
+                comment,
+                status,
+                created_by
+            )
+            VALUES (?, ?, ?, ?, 1, ?)
+            """;
+    public static final String IS_REVIEW_COMMENT_ALREADY_REACTED = """
+            SELECT
+                prcr.comment_id,
+                prcr.user_id,
+                rt.name
+            FROM product_review_comment_reaction prcr
+            LEFT JOIN reaction_type rt
+                ON prcr.reaction_type_id = rt.id
+            WHERE prcr.comment_id = ?
+              AND prcr.user_id = ?
+              AND prcr.status = 1
+            """;
+    public static final String ADD_REACTION_TO_REVIEW_COMMENT = """
+            INSERT INTO product_review_comment_reaction (
+                comment_id,
+                user_id,
+                reaction_type_id,
+                status,
+                created_by
+            )
+            SELECT
+                ?,
+                ?,
+                rt.id,
+                1,
+                ?
+            FROM reaction_type rt
+            WHERE rt.name = ?
+              AND rt.status = 1
+            """;
+    public static final String REMOVE_REVIEW_COMMENT_REACTION = """
+            UPDATE product_review_comment_reaction
+            SET status = 2,
+                terminated_at = CURRENT_TIMESTAMP,
+                terminated_by = ?
+            WHERE comment_id = ? AND user_id = ? AND status = 1
             """;
 }

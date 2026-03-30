@@ -2,16 +2,26 @@ package com.spoolbear.repository.impl;
 
 import com.spoolbear.exception.DataAccessErrorExceptionHandler;
 import com.spoolbear.exception.InternalServerErrorExceptionHandler;
-import com.spoolbear.model.response.ReviewDetailsResponse;
+import com.spoolbear.model.request.InsertReviewRequest;
+import com.spoolbear.model.request.ReviewCommentReactRequest;
+import com.spoolbear.model.request.ReviewCommentRequest;
+import com.spoolbear.model.request.ReviewReactRequest;
+import com.spoolbear.model.response.*;
+import com.spoolbear.queries.BlogQueries;
 import com.spoolbear.queries.ReviewQueries;
 import com.spoolbear.repository.ReviewRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,6 +54,8 @@ public class ReviewRepositoryImpl implements ReviewRepository {
                 if (review == null) {
                     review = ReviewDetailsResponse.builder()
                             .reviewId(reviewId)
+                            .orderId(rs.getLong("order_id"))
+                            .orderType(rs.getString("order_type"))
                             .productId(rs.getLong("product_id"))
                             .productName(rs.getString("product_name"))
                             .reviewComment(rs.getString("comment"))
@@ -154,6 +166,8 @@ public class ReviewRepositoryImpl implements ReviewRepository {
                 if (review == null) {
                     review = ReviewDetailsResponse.builder()
                             .reviewId(reviewId)
+                            .orderId(rs.getLong("order_id"))
+                            .orderType(rs.getString("order_type"))
                             .productId(rs.getLong("product_id"))
                             .productName(rs.getString("product_name"))
                             .reviewComment(rs.getString("comment"))
@@ -248,4 +262,277 @@ public class ReviewRepositoryImpl implements ReviewRepository {
             throw new InternalServerErrorExceptionHandler("Unexpected error occurred while fetching reviews");
         }
     }
+
+    @Override
+    public ReviewAlreadyReactResponse isReviewAlreadyReacted(Long reviewId, Long userId) {
+        try {
+            return jdbcTemplate.queryForObject(
+                    ReviewQueries.GET_REVIEW_PREVIOUS_REACT,
+                    new Object[]{reviewId, userId},
+                    (rs, rowNum) -> ReviewAlreadyReactResponse.builder()
+                            .reviewId(rs.getLong("product_review_id"))
+                            .userId(rs.getLong("user_id"))
+                            .reactType(rs.getString("name"))
+                            .status(rs.getLong("status"))
+                            .build()
+            );
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public void addReactToReview(ReviewReactRequest reviewReactRequest, Long userId) {
+        try {
+            int rowsAffected = jdbcTemplate.update(
+                    ReviewQueries.ADD_REACTION_TO_REVIEW,
+                    reviewReactRequest.getReviewId(),
+                    userId,
+                    userId,
+                    reviewReactRequest.getReactType()
+            );
+
+            if (rowsAffected == 0) {
+                throw new IllegalArgumentException(
+                        "Invalid or inactive reaction type: " + reviewReactRequest.getReactType()
+                );
+            }
+
+            LOGGER.info(
+                    "Reaction '{}' added to review {} by user {}",
+                    reviewReactRequest.getReactType(),
+                    reviewReactRequest.getReviewId(),
+                    userId
+            );
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Error while adding reaction to review", ex);
+            throw ex;
+        }
+    }
+
+    @Override
+    public void removeReactToReview(ReviewReactRequest reviewReactRequest, Long userId) {
+        try {
+            int rowsAffected = jdbcTemplate.update(
+                    ReviewQueries.REMOVE_REVIEW_REACTION,
+                    userId,
+                    reviewReactRequest.getReviewId(),
+                    userId
+            );
+
+            if (rowsAffected == 0) {
+                LOGGER.warn(
+                        "No active reaction found to remove for review {} by user {}",
+                        reviewReactRequest.getReviewId(),
+                        userId
+                );
+            } else {
+                LOGGER.info(
+                        "Reaction removed for review {} by user {}",
+                        reviewReactRequest.getReviewId(),
+                        userId
+                );
+            }
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Error while removing reaction from review", ex);
+            throw ex;
+        }
+    }
+
+    @Override
+    public void changeReactToReview(ReviewReactRequest reviewReactRequest, Long userId) {
+        removeReactToReview(reviewReactRequest, userId);
+        addReactToReview(reviewReactRequest, userId);
+    }
+
+    @Override
+    public void addCommentToReview(ReviewCommentRequest reviewCommentRequest, Long userId) {
+        try {
+            int rowsAffected = jdbcTemplate.update(
+                    ReviewQueries.INSERT_REVIEW_COMMENT,
+                    reviewCommentRequest.getReviewId(),
+                    userId,
+                    reviewCommentRequest.getParentId(),
+                    reviewCommentRequest.getComment(),
+                    userId
+            );
+
+            if (rowsAffected == 0) {
+                throw new IllegalStateException("Failed to add comment to review");
+            }
+
+            LOGGER.info(
+                    "Comment added to review {} by user {}",
+                    reviewCommentRequest.getReviewId(),
+                    userId
+            );
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Error while adding comment to review", ex);
+            throw ex;
+        }
+    }
+
+    @Override
+    public ReviewCommentAlreadyReactResponse isReviewCommentAlreadyReacted(Long commentId, Long userId) {
+        String IS_REVIEW_COMMENT_ALREADY_REACTED = ReviewQueries.IS_REVIEW_COMMENT_ALREADY_REACTED;
+        try {
+            return jdbcTemplate.queryForObject(
+                    IS_REVIEW_COMMENT_ALREADY_REACTED
+                    ,
+                    new Object[]{commentId, userId},
+                    (rs, rowNum) -> ReviewCommentAlreadyReactResponse.builder()
+                            .commentId(rs.getLong("comment_id"))
+                            .userId(rs.getLong("user_id"))
+                            .reactType(rs.getString("name"))
+                            .build()
+            );
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }    }
+
+    @Override
+    public void addReactToReviewComment(ReviewCommentReactRequest reviewCommentReactRequest, Long userId) {
+        try {
+            int rowsAffected = jdbcTemplate.update(
+                    ReviewQueries.ADD_REACTION_TO_REVIEW_COMMENT,
+                    reviewCommentReactRequest.getCommentId(),
+                    userId,
+                    userId,
+                    reviewCommentReactRequest.getReactType()
+            );
+
+            if (rowsAffected == 0) {
+                throw new IllegalArgumentException(
+                        "Invalid or inactive reaction type: " +
+                                reviewCommentReactRequest.getReactType()
+                );
+            }
+
+            LOGGER.info(
+                    "Reaction '{}' added to comment {} by user {}",
+                    reviewCommentReactRequest.getReactType(),
+                    reviewCommentReactRequest.getCommentId(),
+                    userId
+            );
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Error while reacting to review comment", ex);
+            throw ex;
+        }
+    }
+
+    @Override
+    public void removeReactToReviewComment(ReviewCommentReactRequest reviewCommentReactRequest, Long userId) {
+        String REMOVE_REVIEW_COMMENT_REACTION = ReviewQueries.REMOVE_REVIEW_COMMENT_REACTION;
+        try {
+            int rowsAffected = jdbcTemplate.update(
+                    REMOVE_REVIEW_COMMENT_REACTION,
+                    userId,
+                    reviewCommentReactRequest.getCommentId(),
+                    userId
+            );
+
+            if (rowsAffected == 0) {
+                LOGGER.warn(
+                        "No active reaction found to remove for comment {} by user {}",
+                        reviewCommentReactRequest.getCommentId(),
+                        userId
+                );
+            } else {
+                LOGGER.info(
+                        "Reaction removed for comment {} by user {}",
+                        reviewCommentReactRequest.getCommentId(),
+                        userId
+                );
+            }
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Error while removing reaction from comment", ex);
+            throw ex;
+        }
+    }
+
+    @Override
+    public void changeReactToReviewComment(ReviewCommentReactRequest reviewCommentReactRequest, Long userId) {
+        removeReactToReviewComment(reviewCommentReactRequest,userId);
+        addReactToReviewComment(reviewCommentReactRequest, userId);
+    }
+
+    @Override
+    public Long addReviewDetails(InsertReviewRequest request, Long userId) {
+        try {
+            String sql = """
+            INSERT INTO product_reviews (
+                product_id,
+                user_id,
+                rating,
+                comment,
+                status,
+                created_by,
+                order_type,
+                order_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """;
+
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+
+            jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(
+                        sql,
+                        Statement.RETURN_GENERATED_KEYS
+                );
+
+                ps.setLong(1, request.getProductOrPrintingId()); // product_id
+                ps.setLong(2, userId);                           // user_id
+                ps.setInt(3, request.getRating());               // rating (1–5)
+                ps.setString(4, request.getComment());           // comment
+                ps.setInt(5, 1);                                 // status (default active)
+                ps.setLong(6, userId);                           // created_by
+                ps.setString(7, request.getOrderType());         // order_type
+                ps.setObject(8, request.getOrderId());           // order_id (nullable)
+
+                return ps;
+            }, keyHolder);
+
+            return keyHolder.getKey() != null ? keyHolder.getKey().longValue() : null;
+
+        } catch (Exception e) {
+            LOGGER.error("Error while adding review details: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    @Override
+    public void addReviewImages(List<InsertReviewRequest.ReviewImage> images,
+                                Long reviewId,
+                                Long userId) {
+
+        try {
+            if (images == null || images.isEmpty()) {
+                return;
+            }
+
+            String sql = """
+            INSERT INTO review_images (
+                review_id,
+                image_url,
+                created_by
+            ) VALUES (?, ?, ?)
+        """;
+
+            jdbcTemplate.batchUpdate(sql, images, images.size(), (ps, image) -> {
+                ps.setLong(1, reviewId);
+                ps.setString(2, image.getImageUrl());
+                ps.setLong(3, userId);
+            });
+
+        } catch (Exception e) {
+            LOGGER.error("Error while adding review images: {}", e.getMessage(), e);
+        }
+    }
+
+
 }

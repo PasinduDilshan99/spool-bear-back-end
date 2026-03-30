@@ -1,6 +1,8 @@
 package com.spoolbear.controller;
 
+import com.spoolbear.model.request.*;
 import com.spoolbear.model.response.CommonResponse;
+import com.spoolbear.model.response.InsertResponse;
 import com.spoolbear.model.response.ReviewDetailsResponse;
 import com.spoolbear.service.ReviewService;
 import com.spoolbear.util.Constant;
@@ -9,9 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -44,5 +44,36 @@ public class ReviewController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @PostMapping(path = "/add-review")
+    public ResponseEntity<CommonResponse<InsertResponse>> addReview(@RequestBody InsertReviewRequest insertReviewRequest) {
+        LOGGER.info("{} Start execute add review {}", Constant.DOTS, Constant.DOTS);
+        CommonResponse<InsertResponse> response = reviewService.addReview(insertReviewRequest);
+        LOGGER.info("{} End execute add review {}", Constant.DOTS, Constant.DOTS);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/add-react")
+    public ResponseEntity<CommonResponse<InsertResponse>> addReactToReview(@RequestBody ReviewReactRequest reviewReactRequest) {
+        LOGGER.info("{} Start execute add react to review {}", Constant.DOTS, Constant.DOTS);
+        CommonResponse<InsertResponse> response = reviewService.addReactToReview(reviewReactRequest);
+        LOGGER.info("{} End execute add react to review {}", Constant.DOTS, Constant.DOTS);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/add-comment-react")
+    public ResponseEntity<CommonResponse<InsertResponse>> addReactToReviewComment(@RequestBody ReviewCommentReactRequest reviewCommentReactRequest) {
+        LOGGER.info("{} Start execute add react to review comment {}", Constant.DOTS, Constant.DOTS);
+        CommonResponse<InsertResponse> response = reviewService.addReactToReviewComment(reviewCommentReactRequest);
+        LOGGER.info("{} End execute add react to review comment {}", Constant.DOTS, Constant.DOTS);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/add-comment")
+    public ResponseEntity<CommonResponse<InsertResponse>> addCommentToReview(@RequestBody ReviewCommentRequest reviewCommentRequest) {
+        LOGGER.info("{} Start execute add comment to review {}", Constant.DOTS, Constant.DOTS);
+        CommonResponse<InsertResponse> response = reviewService.addCommentToReview(reviewCommentRequest);
+        LOGGER.info("{} End execute add comment to review {}", Constant.DOTS, Constant.DOTS);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
 }
