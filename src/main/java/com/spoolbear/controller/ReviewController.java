@@ -36,6 +36,22 @@ public class ReviewController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @PostMapping(path = "/review-by-id")
+    public ResponseEntity<CommonResponse<ReviewDetailsResponse>> getReviewById(@RequestBody ReviewDetailsByIdRequest reviewDetailsByIdRequest) {
+        LOGGER.info("{} Start execute get all reviews {}", Constant.DOTS, Constant.DOTS);
+        CommonResponse<ReviewDetailsResponse> response = reviewService.getReviewById(reviewDetailsByIdRequest);
+        LOGGER.info("{} End execute get all reviews {}", Constant.DOTS, Constant.DOTS);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/reviews-by-product-id")
+    public ResponseEntity<CommonResponse<List<ReviewDetailsResponse>>> getReviewsByProductId(@RequestBody ReviewsForProductIdRequest reviewsForProductIdRequest) {
+        LOGGER.info("{} Start execute get reviews by product id {}", Constant.DOTS, Constant.DOTS);
+        CommonResponse<List<ReviewDetailsResponse>> response = reviewService.getReviewsByProductId(reviewsForProductIdRequest);
+        LOGGER.info("{} End execute get reviews by product id {}", Constant.DOTS, Constant.DOTS);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
     @GetMapping(path = "/reviews-by-user")
     public ResponseEntity<CommonResponse<List<ReviewDetailsResponse>>> getReviewsByUser() {
         LOGGER.info("{} Start execute get reviews by user {}", Constant.DOTS, Constant.DOTS);

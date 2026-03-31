@@ -23,7 +23,8 @@ public class ReviewDetailsResponse {
     private String reviewComment;
     private BigDecimal rating;
     private String reviewStatus;
-    private Long reviewCreatedBy;
+    private String reviewCreatedBy;
+    private String reviewCreatedImageUrl;
     private LocalDateTime reviewCreatedAt;
     private Long reviewUpdatedBy;
     private LocalDateTime reviewUpdatedAt;
@@ -60,6 +61,7 @@ public class ReviewDetailsResponse {
         private Long commentReviewId;
         private Long userId;
         private String userName;
+        private String userImageUrl;
         private Long parentCommentId;
         private String comment;
         private String commentStatus;

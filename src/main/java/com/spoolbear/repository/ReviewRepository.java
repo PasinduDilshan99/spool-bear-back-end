@@ -1,9 +1,6 @@
 package com.spoolbear.repository;
 
-import com.spoolbear.model.request.InsertReviewRequest;
-import com.spoolbear.model.request.ReviewCommentReactRequest;
-import com.spoolbear.model.request.ReviewCommentRequest;
-import com.spoolbear.model.request.ReviewReactRequest;
+import com.spoolbear.model.request.*;
 import com.spoolbear.model.response.ReviewAlreadyReactResponse;
 import com.spoolbear.model.response.ReviewCommentAlreadyReactResponse;
 import com.spoolbear.model.response.ReviewDetailsResponse;
@@ -36,4 +33,12 @@ public interface ReviewRepository {
     Long addReviewDetails(InsertReviewRequest insertReviewRequest, Long userId);
 
     void addReviewImages(List<InsertReviewRequest.ReviewImage> images, Long reviewId, Long userId);
+
+    void chnageStatusReact(ReviewReactRequest reviewReactRequest, Long userId);
+
+    void chnageCommentStatusReact(ReviewCommentReactRequest reviewCommentReactRequest, Long userId);
+
+    ReviewDetailsResponse getReviewById(ReviewDetailsByIdRequest reviewDetailsByIdRequest);
+
+    List<ReviewDetailsResponse> getReviewsByProductId(ReviewsForProductIdRequest reviewsForProductIdRequest);
 }

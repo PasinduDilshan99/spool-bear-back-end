@@ -2,10 +2,7 @@ package com.spoolbear.repository.impl;
 
 import com.spoolbear.exception.DataAccessErrorExceptionHandler;
 import com.spoolbear.exception.InternalServerErrorExceptionHandler;
-import com.spoolbear.model.request.InsertReviewRequest;
-import com.spoolbear.model.request.ReviewCommentReactRequest;
-import com.spoolbear.model.request.ReviewCommentRequest;
-import com.spoolbear.model.request.ReviewReactRequest;
+import com.spoolbear.model.request.*;
 import com.spoolbear.model.response.*;
 import com.spoolbear.queries.BlogQueries;
 import com.spoolbear.queries.ReviewQueries;
@@ -58,10 +55,11 @@ public class ReviewRepositoryImpl implements ReviewRepository {
                             .orderType(rs.getString("order_type"))
                             .productId(rs.getLong("product_id"))
                             .productName(rs.getString("product_name"))
-                            .reviewComment(rs.getString("comment"))
+                            .reviewComment(rs.getString("review_comment"))
                             .rating(rs.getBigDecimal("rating"))
                             .reviewStatus(rs.getString("review_status"))
-                            .reviewCreatedBy(rs.getLong("review_created_by"))
+                            .reviewCreatedBy(rs.getString("review_created_by"))
+                            .reviewCreatedImageUrl(rs.getString("review_created_image_url"))
                             .reviewCreatedAt(rs.getTimestamp("review_created_at").toLocalDateTime())
                             .reviewUpdatedBy(rs.getObject("review_updated_by") != null ? rs.getLong("review_updated_by") : null)
                             .reviewUpdatedAt(rs.getTimestamp("review_updated_at") != null ? rs.getTimestamp("review_updated_at").toLocalDateTime() : null)
@@ -111,8 +109,9 @@ public class ReviewRepositoryImpl implements ReviewRepository {
                                 .commentReviewId(rs.getLong("comment_review_id"))
                                 .userId(rs.getLong("comment_user_id"))
                                 .userName(rs.getString("comment_user_name"))
+                                .userImageUrl(rs.getString("comment_image_url"))
                                 .parentCommentId(rs.getObject("parent_comment_id") != null ? rs.getLong("parent_comment_id") : null)
-                                .comment(rs.getString("comment"))
+                                .comment(rs.getString("comment_text"))
                                 .commentStatus(rs.getString("comment_status"))
                                 .commentCreatedAt(rs.getTimestamp("comment_created_at").toLocalDateTime())
                                 .commentCreatedBy(rs.getLong("comment_created_by"))
@@ -170,10 +169,11 @@ public class ReviewRepositoryImpl implements ReviewRepository {
                             .orderType(rs.getString("order_type"))
                             .productId(rs.getLong("product_id"))
                             .productName(rs.getString("product_name"))
-                            .reviewComment(rs.getString("comment"))
+                            .reviewComment(rs.getString("review_comment"))
                             .rating(rs.getBigDecimal("rating"))
                             .reviewStatus(rs.getString("review_status"))
-                            .reviewCreatedBy(rs.getLong("review_created_by"))
+                            .reviewCreatedBy(rs.getString("review_created_by"))
+                            .reviewCreatedImageUrl(rs.getString("review_created_image_url"))
                             .reviewCreatedAt(rs.getTimestamp("review_created_at").toLocalDateTime())
                             .reviewUpdatedBy(rs.getObject("review_updated_by") != null ? rs.getLong("review_updated_by") : null)
                             .reviewUpdatedAt(rs.getTimestamp("review_updated_at") != null ? rs.getTimestamp("review_updated_at").toLocalDateTime() : null)
@@ -223,8 +223,9 @@ public class ReviewRepositoryImpl implements ReviewRepository {
                                 .commentReviewId(rs.getLong("comment_review_id"))
                                 .userId(rs.getLong("comment_user_id"))
                                 .userName(rs.getString("comment_user_name"))
+                                .userImageUrl(rs.getString("comment_image_url"))
                                 .parentCommentId(rs.getObject("parent_comment_id") != null ? rs.getLong("parent_comment_id") : null)
-                                .comment(rs.getString("comment"))
+                                .comment(rs.getString("comment_text"))
                                 .commentStatus(rs.getString("comment_status"))
                                 .commentCreatedAt(rs.getTimestamp("comment_created_at").toLocalDateTime())
                                 .commentCreatedBy(rs.getLong("comment_created_by"))
@@ -312,6 +313,68 @@ public class ReviewRepositoryImpl implements ReviewRepository {
     }
 
     @Override
+    public void chnageStatusReact(ReviewReactRequest reviewReactRequest, Long userId) {
+        try {
+            int rowsAffected = jdbcTemplate.update(
+                    ReviewQueries.CHANGE_REVIEW_REACTION_STATUS,
+                    userId,
+                    reviewReactRequest.getReviewId(),
+                    userId
+            );
+
+            if (rowsAffected == 0) {
+                LOGGER.warn(
+                        "No active reaction found to change for review {} by user {}",
+                        reviewReactRequest.getReviewId(),
+                        userId
+                );
+            } else {
+                LOGGER.info(
+                        "Reaction change for review {} by user {}",
+                        reviewReactRequest.getReviewId(),
+                        userId
+                );
+            }
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Error while changeing reaction from review", ex);
+            throw ex;
+        }
+    }
+
+    @Override
+    public void chnageCommentStatusReact(ReviewCommentReactRequest reviewCommentReactRequest, Long userId) {
+        String CHNAGE_COMMENT_REACTION_STATUS = ReviewQueries.CHNAGE_COMMENT_REACTION_STATUS;
+        try {
+            int rowsAffected = jdbcTemplate.update(
+                    CHNAGE_COMMENT_REACTION_STATUS,
+                    userId,
+                    reviewCommentReactRequest.getCommentId(),
+                    userId
+            );
+
+            if (rowsAffected == 0) {
+                LOGGER.warn(
+                        "No active reaction found to remove for comment {} by user {}",
+                        reviewCommentReactRequest.getCommentId(),
+                        userId
+                );
+            } else {
+                LOGGER.info(
+                        "Reaction removed for comment {} by user {}",
+                        reviewCommentReactRequest.getCommentId(),
+                        userId
+                );
+            }
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Error while removing reaction from comment", ex);
+            throw ex;
+        }
+    }
+
+
+    @Override
     public void removeReactToReview(ReviewReactRequest reviewReactRequest, Long userId) {
         try {
             int rowsAffected = jdbcTemplate.update(
@@ -387,6 +450,7 @@ public class ReviewRepositoryImpl implements ReviewRepository {
                             .commentId(rs.getLong("comment_id"))
                             .userId(rs.getLong("user_id"))
                             .reactType(rs.getString("name"))
+                            .status(rs.getLong("status"))
                             .build()
             );
         } catch (EmptyResultDataAccessException e) {
@@ -398,12 +462,11 @@ public class ReviewRepositoryImpl implements ReviewRepository {
         try {
             int rowsAffected = jdbcTemplate.update(
                     ReviewQueries.ADD_REACTION_TO_REVIEW_COMMENT,
-                    reviewCommentReactRequest.getCommentId(),
-                    userId,
-                    userId,
-                    reviewCommentReactRequest.getReactType()
+                    userId,                                   // user_id
+                    userId,                                   // created_by
+                    reviewCommentReactRequest.getReactType(), // reaction type
+                    reviewCommentReactRequest.getCommentId()  // WHERE prc.id = ?
             );
-
             if (rowsAffected == 0) {
                 throw new IllegalArgumentException(
                         "Invalid or inactive reaction type: " +
@@ -531,6 +594,240 @@ public class ReviewRepositoryImpl implements ReviewRepository {
 
         } catch (Exception e) {
             LOGGER.error("Error while adding review images: {}", e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public ReviewDetailsResponse getReviewById(ReviewDetailsByIdRequest reviewDetailsByIdRequest) {
+        String GET_REVIEW_DETAILS_BY_ID = ReviewQueries.GET_REVIEW_DETAILS_BY_REVIEW_ID;
+        try {
+            LOGGER.info("Executing query to fetch review details by ID.");
+
+            Map<Long, ReviewDetailsResponse> reviewMap = new LinkedHashMap<>();
+
+            jdbcTemplate.query(GET_REVIEW_DETAILS_BY_ID, new Object[]{reviewDetailsByIdRequest.getReviewId()}, rs -> {
+                Long reviewId = rs.getLong("review_id");
+                ReviewDetailsResponse review = reviewMap.get(reviewId);
+
+                if (review == null) {
+                    review = ReviewDetailsResponse.builder()
+                            .reviewId(reviewId)
+                            .orderId(rs.getLong("order_id"))
+                            .orderType(rs.getString("order_type"))
+                            .productId(rs.getLong("product_id"))
+                            .productName(rs.getString("product_name"))
+                            .reviewComment(rs.getString("review_comment"))
+                            .rating(rs.getBigDecimal("rating"))
+                            .reviewStatus(rs.getString("review_status"))
+                            .reviewCreatedBy(rs.getString("review_created_by"))
+                            .reviewCreatedImageUrl(rs.getString("review_created_image_url"))
+                            .reviewCreatedAt(rs.getTimestamp("review_created_at").toLocalDateTime())
+                            .reviewUpdatedBy(rs.getObject("review_updated_by") != null ? rs.getLong("review_updated_by") : null)
+                            .reviewUpdatedAt(rs.getTimestamp("review_updated_at") != null ? rs.getTimestamp("review_updated_at").toLocalDateTime() : null)
+                            .images(new ArrayList<>())
+                            .reactions(new ArrayList<>())
+                            .comments(new ArrayList<>())
+                            .build();
+                    reviewMap.put(reviewId, review);
+                }
+
+                // Image
+                Long imageId = rs.getObject("image_id", Long.class);
+                if (imageId != null && review.getImages().stream().noneMatch(i -> i.getImageId().equals(imageId))) {
+                    review.getImages().add(ReviewDetailsResponse.ReviewImage.builder()
+                            .imageId(imageId)
+                            .imageUrl(rs.getString("image_url"))
+                            .imageCreatedBy(rs.getLong("image_created_by"))
+                            .imageCreatedAt(rs.getTimestamp("image_created_at").toLocalDateTime())
+                            .build());
+                }
+
+                // Review Reaction
+                Long reviewReactionId = rs.getObject("review_reaction_id", Long.class);
+                if (reviewReactionId != null && review.getReactions().stream().noneMatch(r -> r.getReviewReactionId().equals(reviewReactionId))) {
+                    review.getReactions().add(ReviewDetailsResponse.ReviewReaction.builder()
+                            .reviewReactionId(reviewReactionId)
+                            .reactionReviewId(rs.getLong("reaction_review_id"))
+                            .userId(rs.getLong("reaction_user_id"))
+                            .userName(rs.getString("reaction_user_name"))
+                            .reactionType(rs.getString("reaction_type"))
+                            .reviewReactionStatus(rs.getString("review_reaction_status"))
+                            .reactionCreatedAt(rs.getTimestamp("reaction_created_at").toLocalDateTime())
+                            .build());
+                }
+
+                // Comment
+                Long commentId = rs.getObject("comment_id", Long.class);
+                ReviewDetailsResponse.Comment comment = null;
+
+                if (commentId != null) {
+                    comment = review.getComments().stream()
+                            .filter(c -> c.getCommentId().equals(commentId))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (comment == null) {
+                        comment = ReviewDetailsResponse.Comment.builder()
+                                .commentId(commentId)
+                                .commentReviewId(rs.getLong("comment_review_id"))
+                                .userId(rs.getLong("comment_user_id"))
+                                .userName(rs.getString("comment_user_name"))
+                                .userImageUrl(rs.getString("comment_image_url"))
+                                .parentCommentId(rs.getObject("parent_comment_id") != null ? rs.getLong("parent_comment_id") : null)
+                                .comment(rs.getString("comment_text"))
+                                .commentStatus(rs.getString("comment_status"))
+                                .commentCreatedAt(rs.getTimestamp("comment_created_at").toLocalDateTime())
+                                .commentCreatedBy(rs.getLong("comment_created_by"))
+                                .commentReactions(new ArrayList<>())
+                                .build();
+
+                        review.getComments().add(comment);
+                    }
+                }
+
+                // Comment Reaction
+                if (comment != null) {
+                    Long commentReactionId = rs.getObject("comment_reaction_id", Long.class);
+                    if (commentReactionId != null && comment.getCommentReactions().stream().noneMatch(cr -> cr.getCommentReactionId().equals(commentReactionId))) {
+                        comment.getCommentReactions().add(
+                                ReviewDetailsResponse.Comment.CommentReaction.builder()
+                                        .commentReactionId(commentReactionId)
+                                        .commentReactionCommentId(rs.getLong("comment_reaction_comment_id"))
+                                        .userId(rs.getLong("comment_reaction_user_id"))
+                                        .userName(rs.getString("comment_reaction_user_name"))
+                                        .commentReactionType(rs.getString("comment_reaction_type"))
+                                        .commentReactionStatus(rs.getString("comment_reaction_status"))
+                                        .commentReactionCreatedBy(rs.getLong("comment_reaction_created_by"))
+                                        .commentReactionCreatedAt(rs.getTimestamp("comment_reaction_created_at").toLocalDateTime())
+                                        .build()
+                        );
+                    }
+                }
+            });
+
+            // ✅ Return single object
+            return reviewMap.values().stream().findFirst().orElse(null);
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Database error while fetching review: {}", ex.getMessage(), ex);
+            throw new DataAccessErrorExceptionHandler("Failed to fetch review from database");
+        } catch (Exception ex) {
+            LOGGER.error("Unexpected error while fetching review: {}", ex.getMessage(), ex);
+            throw new InternalServerErrorExceptionHandler("Unexpected error occurred while fetching review");
+        }
+    }
+
+    @Override
+    public List<ReviewDetailsResponse> getReviewsByProductId(ReviewsForProductIdRequest reviewsForProductIdRequest) {
+        String GET_REVIEW_DETAILS_BY_PRODUCT_ID = ReviewQueries.GET_REVIEW_DETAILS_BY_PRODUCT_ID;
+        try {
+            LOGGER.info("Executing query to fetch reviews by product id.");
+
+            Map<Long, ReviewDetailsResponse> reviewMap = new LinkedHashMap<>();
+
+            jdbcTemplate.query(GET_REVIEW_DETAILS_BY_PRODUCT_ID, new Object[]{reviewsForProductIdRequest.getProductId()},rs -> {
+                Long reviewId = rs.getLong("review_id");
+                ReviewDetailsResponse review = reviewMap.get(reviewId);
+
+                if (review == null) {
+                    review = ReviewDetailsResponse.builder()
+                            .reviewId(reviewId)
+                            .orderId(rs.getLong("order_id"))
+                            .orderType(rs.getString("order_type"))
+                            .productId(rs.getLong("product_id"))
+                            .productName(rs.getString("product_name"))
+                            .reviewComment(rs.getString("review_comment"))
+                            .rating(rs.getBigDecimal("rating"))
+                            .reviewStatus(rs.getString("review_status"))
+                            .reviewCreatedBy(rs.getString("review_created_by"))
+                            .reviewCreatedImageUrl(rs.getString("review_created_image_url"))
+                            .reviewCreatedAt(rs.getTimestamp("review_created_at").toLocalDateTime())
+                            .reviewUpdatedBy(rs.getObject("review_updated_by") != null ? rs.getLong("review_updated_by") : null)
+                            .reviewUpdatedAt(rs.getTimestamp("review_updated_at") != null ? rs.getTimestamp("review_updated_at").toLocalDateTime() : null)
+                            .images(new ArrayList<>())
+                            .reactions(new ArrayList<>())
+                            .comments(new ArrayList<>())
+                            .build();
+                    reviewMap.put(reviewId, review);
+                }
+
+                // Process Review Image
+                Long imageId = rs.getObject("image_id", Long.class);
+                if (imageId != null && review.getImages().stream().noneMatch(i -> i.getImageId().equals(imageId))) {
+                    review.getImages().add(ReviewDetailsResponse.ReviewImage.builder()
+                            .imageId(imageId)
+                            .imageUrl(rs.getString("image_url"))
+                            .imageCreatedBy(rs.getLong("image_created_by"))
+                            .imageCreatedAt(rs.getTimestamp("image_created_at").toLocalDateTime())
+                            .build());
+                }
+
+                // Process Review Reaction
+                Long reviewReactionId = rs.getObject("review_reaction_id", Long.class);
+                if (reviewReactionId != null && review.getReactions().stream().noneMatch(r -> r.getReviewReactionId().equals(reviewReactionId))) {
+                    review.getReactions().add(ReviewDetailsResponse.ReviewReaction.builder()
+                            .reviewReactionId(reviewReactionId)
+                            .reactionReviewId(rs.getLong("reaction_review_id"))
+                            .userId(rs.getLong("reaction_user_id"))
+                            .userName(rs.getString("reaction_user_name"))
+                            .reactionType(rs.getString("reaction_type"))
+                            .reviewReactionStatus(rs.getString("review_reaction_status"))
+                            .reactionCreatedAt(rs.getTimestamp("reaction_created_at").toLocalDateTime())
+                            .build());
+                }
+
+                // Process Comment
+                Long commentId = rs.getObject("comment_id", Long.class);
+                ReviewDetailsResponse.Comment comment = null;
+                if (commentId != null) {
+                    comment = review.getComments().stream()
+                            .filter(c -> c.getCommentId().equals(commentId))
+                            .findFirst()
+                            .orElse(null);
+                    if (comment == null) {
+                        comment = ReviewDetailsResponse.Comment.builder()
+                                .commentId(commentId)
+                                .commentReviewId(rs.getLong("comment_review_id"))
+                                .userId(rs.getLong("comment_user_id"))
+                                .userName(rs.getString("comment_user_name"))
+                                .userImageUrl(rs.getString("comment_image_url"))
+                                .parentCommentId(rs.getObject("parent_comment_id") != null ? rs.getLong("parent_comment_id") : null)
+                                .comment(rs.getString("comment_text"))
+                                .commentStatus(rs.getString("comment_status"))
+                                .commentCreatedAt(rs.getTimestamp("comment_created_at").toLocalDateTime())
+                                .commentCreatedBy(rs.getLong("comment_created_by"))
+                                .commentReactions(new ArrayList<>())
+                                .build();
+                        review.getComments().add(comment);
+                    }
+                }
+
+                // Process Comment Reaction
+                if (comment != null) {
+                    Long commentReactionId = rs.getObject("comment_reaction_id", Long.class);
+                    if (commentReactionId != null && comment.getCommentReactions().stream().noneMatch(cr -> cr.getCommentReactionId().equals(commentReactionId))) {
+                        comment.getCommentReactions().add(ReviewDetailsResponse.Comment.CommentReaction.builder()
+                                .commentReactionId(commentReactionId)
+                                .commentReactionCommentId(rs.getLong("comment_reaction_comment_id"))
+                                .userId(rs.getLong("comment_reaction_user_id"))
+                                .userName(rs.getString("comment_reaction_user_name"))
+                                .commentReactionType(rs.getString("comment_reaction_type"))
+                                .commentReactionStatus(rs.getString("comment_reaction_status"))
+                                .commentReactionCreatedBy(rs.getLong("comment_reaction_created_by"))
+                                .commentReactionCreatedAt(rs.getTimestamp("comment_reaction_created_at").toLocalDateTime())
+                                .build());
+                    }
+                }
+            });
+
+            return new ArrayList<>(reviewMap.values());
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Database error while fetching reviews: {}", ex.getMessage(), ex);
+            throw new DataAccessErrorExceptionHandler("Failed to fetch reviews from database");
+        } catch (Exception ex) {
+            LOGGER.error("Unexpected error while fetching reviews: {}", ex.getMessage(), ex);
+            throw new InternalServerErrorExceptionHandler("Unexpected error occurred while fetching reviews");
         }
     }
 

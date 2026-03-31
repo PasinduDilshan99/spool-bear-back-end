@@ -1,10 +1,7 @@
 package com.spoolbear.service.impl;
 
 import com.spoolbear.exception.*;
-import com.spoolbear.model.request.InsertReviewRequest;
-import com.spoolbear.model.request.ReviewCommentReactRequest;
-import com.spoolbear.model.request.ReviewCommentRequest;
-import com.spoolbear.model.request.ReviewReactRequest;
+import com.spoolbear.model.request.*;
 import com.spoolbear.model.response.*;
 import com.spoolbear.repository.ReviewRepository;
 import com.spoolbear.service.CommonService;
@@ -121,7 +118,7 @@ public class ReviewServiceImpl implements ReviewService {
                         Instant.now()
                 );
             } else if (reviewAlreadyReactResponse.getReactType().equalsIgnoreCase(reviewReactRequest.getReactType()) && reviewAlreadyReactResponse.getStatus() != 1) {
-                reviewRepository.removeReactToReview(reviewReactRequest, userId);
+                reviewRepository.chnageStatusReact(reviewReactRequest, userId);
                 return new CommonResponse<>(
                         CommonResponseMessages.SUCCESSFULLY_TERMINATE_CODE,
                         CommonResponseMessages.SUCCESSFULLY_TERMINATE_STATUS,
@@ -157,6 +154,7 @@ public class ReviewServiceImpl implements ReviewService {
             Long userId = commonService.getUserIdBySecurityContext();
             ReviewCommentAlreadyReactResponse reviewCommentAlreadyReactResponse =
                     reviewRepository.isReviewCommentAlreadyReacted(reviewCommentReactRequest.getCommentId(), userId);
+            LOGGER.info("review comment already react response : {}", reviewCommentAlreadyReactResponse);
             if (reviewCommentAlreadyReactResponse == null) {
                 reviewRepository.addReactToReviewComment(reviewCommentReactRequest, userId);
                 return new CommonResponse<>(
@@ -166,7 +164,9 @@ public class ReviewServiceImpl implements ReviewService {
                         new InsertResponse("Successfully add review comment react request"),
                         Instant.now()
                 );
-            } else if (reviewCommentAlreadyReactResponse.getReactType().equalsIgnoreCase(reviewCommentReactRequest.getReactType())) {
+            } else if (reviewCommentAlreadyReactResponse.getReactType().equalsIgnoreCase(reviewCommentReactRequest.getReactType()) &&
+                    reviewCommentAlreadyReactResponse.getStatus() == 1) {
+                LOGGER.info("remove review comment react request");
                 reviewRepository.removeReactToReviewComment(reviewCommentReactRequest, userId);
                 return new CommonResponse<>(
                         CommonResponseMessages.SUCCESSFULLY_TERMINATE_CODE,
@@ -175,7 +175,19 @@ public class ReviewServiceImpl implements ReviewService {
                         new InsertResponse("Successfully remove review comment react request"),
                         Instant.now()
                 );
+            } else if (reviewCommentAlreadyReactResponse.getReactType().equalsIgnoreCase(reviewCommentReactRequest.getReactType()) &&
+                    reviewCommentAlreadyReactResponse.getStatus() != 1) {
+                LOGGER.info("change review comment react request status");
+                reviewRepository.chnageCommentStatusReact(reviewCommentReactRequest, userId);
+                return new CommonResponse<>(
+                        CommonResponseMessages.SUCCESSFULLY_TERMINATE_CODE,
+                        CommonResponseMessages.SUCCESSFULLY_TERMINATE_STATUS,
+                        CommonResponseMessages.SUCCESSFULLY_TERMINATE_MESSAGE,
+                        new InsertResponse("Successfully remove review comment react request"),
+                        Instant.now()
+                );
             } else {
+                LOGGER.info("change review comment react request");
                 reviewRepository.changeReactToReviewComment(reviewCommentReactRequest, userId);
                 return new CommonResponse<>(
                         CommonResponseMessages.SUCCESSFULLY_UPDATE_CODE,
@@ -240,6 +252,58 @@ public class ReviewServiceImpl implements ReviewService {
         } catch (Exception e) {
             LOGGER.error(e.toString());
             throw new InternalServerErrorExceptionHandler("Something went wrong");
+        }
+    }
+
+    @Override
+    public CommonResponse<ReviewDetailsResponse> getReviewById(ReviewDetailsByIdRequest reviewDetailsByIdRequest) {
+        LOGGER.info("Start fetching all reviews from repository");
+        try {
+            ReviewDetailsResponse reviewDetailsResponse = reviewRepository.getReviewById(reviewDetailsByIdRequest);
+
+            return new CommonResponse<>(
+                    CommonResponseMessages.SUCCESSFULLY_RETRIEVE_CODE,
+                    CommonResponseMessages.SUCCESSFULLY_RETRIEVE_STATUS,
+                    CommonResponseMessages.SUCCESSFULLY_RETRIEVE_MESSAGE,
+                    reviewDetailsResponse,
+                    Instant.now());
+
+        } catch (DataNotFoundErrorExceptionHandler | DataAccessErrorExceptionHandler e) {
+            throw e;
+        } catch (Exception e) {
+            LOGGER.error("Error occurred while fetching reviews: {}", e.getMessage(), e);
+            throw new InternalServerErrorExceptionHandler("Failed to fetch reviews from database");
+        } finally {
+            LOGGER.info("End fetching reviews from repository");
+        }
+    }
+
+    @Override
+    public CommonResponse<List<ReviewDetailsResponse>> getReviewsByProductId(ReviewsForProductIdRequest reviewsForProductIdRequest) {
+        LOGGER.info("Start fetching reviews by product id from repository");
+        try {
+            List<ReviewDetailsResponse> reviewDetailsResponses = reviewRepository.getReviewsByProductId(reviewsForProductIdRequest);
+
+            if (reviewDetailsResponses.isEmpty()) {
+                LOGGER.warn("No reviews for product id found in database");
+                throw new DataNotFoundErrorExceptionHandler("No reviews found for product id");
+            }
+
+            LOGGER.info("Fetched {} reviews by product id successfully", reviewDetailsResponses.size());
+            return new CommonResponse<>(
+                    CommonResponseMessages.SUCCESSFULLY_RETRIEVE_CODE,
+                    CommonResponseMessages.SUCCESSFULLY_RETRIEVE_STATUS,
+                    CommonResponseMessages.SUCCESSFULLY_RETRIEVE_MESSAGE,
+                    reviewDetailsResponses,
+                    Instant.now());
+
+        } catch (DataNotFoundErrorExceptionHandler | DataAccessErrorExceptionHandler e) {
+            throw e;
+        } catch (Exception e) {
+            LOGGER.error("Error occurred while fetching reviews by product id : {}", e.getMessage(), e);
+            throw new InternalServerErrorExceptionHandler("Failed to fetch reviews by product id from database");
+        } finally {
+            LOGGER.info("End fetching reviews by product id from repository");
         }
     }
 }

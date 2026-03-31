@@ -13,4 +13,5 @@ public class ReviewCommentAlreadyReactResponse {
     private Long commentId;
     private String reactType;
     private Long userId;
+    private Long status;
 }
