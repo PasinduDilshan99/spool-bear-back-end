@@ -29,6 +29,7 @@ public class ProductResponse {
     private Long materialId;
     private String materialName;
     private String materialDescription;
+    private String materialType;
 
     private Long categoryId;
     private String categoryName;

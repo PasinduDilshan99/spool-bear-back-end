@@ -69,7 +69,7 @@ public class CartQueries {
 
     public static final String INCREASE_QUANTITY = """
     UPDATE cart_items
-    SET quantity = quantity + 1
+    SET quantity = quantity + ?
     WHERE cart_item_id = ? AND (status IS NULL OR status = 1)
 """;
 
@@ -81,7 +81,7 @@ public class CartQueries {
 
     public static final String DECREASE_PRODUCT_STOCK = """
     UPDATE products
-    SET stock_quantity = stock_quantity - 1
+    SET stock_quantity = stock_quantity - ?
     WHERE product_id = ? AND stock_quantity > 0
 """;
 

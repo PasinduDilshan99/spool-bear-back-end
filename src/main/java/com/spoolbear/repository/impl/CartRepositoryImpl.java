@@ -49,9 +49,9 @@ public class CartRepositoryImpl implements CartRepository {
             LOGGER.info("Creating a new cart for userId: {}", userId);
 
             String INSERT_CART_SQL = """
-                INSERT INTO cart (user_id, created_by)
-                VALUES (?, ?)
-                """;
+                    INSERT INTO cart (user_id, created_by)
+                    VALUES (?, ?)
+                    """;
 
             KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -197,11 +197,11 @@ public class CartRepositoryImpl implements CartRepository {
     }
 
     @Override
-    public void decreaseProductQuantityByOne(Long productId) {
+    public void decreaseProductQuantity(Long productId, int quantity) {
         try {
             LOGGER.info("Decreasing stock for productId: {}", productId);
 
-            int rowsAffected = jdbcTemplate.update(CartQueries.DECREASE_PRODUCT_STOCK, productId);
+            int rowsAffected = jdbcTemplate.update(CartQueries.DECREASE_PRODUCT_STOCK, quantity, productId);
 
             if (rowsAffected == 0) {
                 LOGGER.warn("Product not found or stock already zero for productId: {}", productId);
@@ -329,12 +329,13 @@ public class CartRepositoryImpl implements CartRepository {
     }
 
     @Override
-    public boolean increaseCartProductQuantityByOne(Long cartItemId) {
+    public boolean increaseCartProductQuantity(Long cartItemId, int quantity) {
         try {
             LOGGER.info("Increasing quantity for cartItemId: {}", cartItemId);
-
+            LOGGER.info(quantity + "");
             int rowsAffected = jdbcTemplate.update(
                     CartQueries.INCREASE_QUANTITY,
+                    quantity,
                     cartItemId
             );
 

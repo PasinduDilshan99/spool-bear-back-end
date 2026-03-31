@@ -119,7 +119,7 @@ public class CartServiceImpl implements CartService {
             for (ProductsCartResponse product : currentProducts) {
                 if (product.getProductId().equals(insertItemToCartRequest.getProductId()) &&
                         product.getColor().equals(insertItemToCartRequest.getColor())) {
-                    isSuccessfullyAdded = cartRepository.increaseCartProductQuantityByOne(product.getCartItemId());
+                    isSuccessfullyAdded = cartRepository.increaseCartProductQuantity(product.getCartItemId(), insertItemToCartRequest.getQuantity());
                     break;
                 }
             }
@@ -130,7 +130,7 @@ public class CartServiceImpl implements CartService {
 
 
             if (isSuccessfullyAdded) {
-                cartRepository.decreaseProductQuantityByOne(insertItemToCartRequest.getProductId());
+                cartRepository.decreaseProductQuantity(insertItemToCartRequest.getProductId(), insertItemToCartRequest.getQuantity());
                 List<ProductsCartResponse> products = fetchCart(new FetchCartRequest(insertItemToCartRequest.getCartId())).getData();
                 return new CommonResponse<>(
                         CommonResponseMessages.SUCCESSFULLY_RETRIEVE_CODE,

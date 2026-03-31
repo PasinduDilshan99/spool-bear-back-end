@@ -49,6 +49,7 @@ public class ProductsRepositoryImpl implements ProductsRepository {
                         p.material_id,
                         m.name AS material_name,
                         m.description AS material_description,
+                        mt.name AS material_type,
                         pc.category_id,
                         pc.name AS category_name,
                         pi.image_id,
@@ -64,6 +65,7 @@ public class ProductsRepositoryImpl implements ProductsRepository {
                     LEFT JOIN product_images pi ON pi.product_id = p.product_id AND pi.status = 1
                     LEFT JOIN product_color_mapping pcm ON pcm.product_id = p.product_id
                     LEFT JOIN product_colors c ON c.color_id = pcm.color_id AND c.status = 1
+                    LEFT JOIN material_type mt ON m.material_type_id = mt.material_type_id
                     WHERE p.status = 1
                     """);
 
@@ -128,6 +130,7 @@ public class ProductsRepositoryImpl implements ProductsRepository {
                             .materialId((row.get("material_id") != null) ? ((Number) row.get("material_id")).longValue() : null)
                             .materialName((String) row.get("material_name"))
                             .materialDescription((String) row.get("material_description"))
+                            .materialType((String) row.get("material_type"))
                             .categoryId((row.get("category_id") != null) ? ((Number) row.get("category_id")).longValue() : null)
                             .categoryName((String) row.get("category_name"))
                             .colors(new ArrayList<>())
@@ -211,6 +214,7 @@ public class ProductsRepositoryImpl implements ProductsRepository {
                     p.material_id,
                     m.name AS material_name,
                     m.description AS material_description,
+                    mt.name AS material_type,
                     pc.category_id,
                     pc.name AS category_name,
                     pi.image_id,
@@ -226,6 +230,7 @@ public class ProductsRepositoryImpl implements ProductsRepository {
                 LEFT JOIN product_images pi ON pi.product_id = p.product_id AND pi.status = 1
                 LEFT JOIN product_color_mapping pcm ON pcm.product_id = p.product_id
                 LEFT JOIN product_colors c ON c.color_id = pcm.color_id AND c.status = 1
+                LEFT JOIN material_type mt ON m.material_type_id = mt.material_type_id
                 WHERE p.status = 1
                   AND p.product_id = ?
                 ORDER BY pi.is_primary DESC, pi.image_id
@@ -255,6 +260,7 @@ public class ProductsRepositoryImpl implements ProductsRepository {
                             .materialId(row.get("material_id") != null ? ((Number) row.get("material_id")).longValue() : null)
                             .materialName((String) row.get("material_name"))
                             .materialDescription((String) row.get("material_description"))
+                            .materialType((String) row.get("material_type"))
                             .categoryId(row.get("category_id") != null ? ((Number) row.get("category_id")).longValue() : null)
                             .categoryName((String) row.get("category_name"))
                             .colors(new ArrayList<>())
