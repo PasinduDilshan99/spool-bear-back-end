@@ -1,10 +1,12 @@
 package com.spoolbear.service.impl;
 
 import com.spoolbear.exception.*;
+import com.spoolbear.model.enums.OrderStatus;
 import com.spoolbear.model.request.*;
 import com.spoolbear.model.response.*;
 import com.spoolbear.repository.ReviewRepository;
 import com.spoolbear.service.CommonService;
+import com.spoolbear.service.OrderService;
 import com.spoolbear.service.ReviewService;
 import com.spoolbear.util.CommonResponseMessages;
 import com.spoolbear.validations.ReviewValidationService;
@@ -25,12 +27,14 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewRepository reviewRepository;
     private final CommonService commonService;
     private final ReviewValidationService reviewValidationService;
+    private final OrderService orderService;
 
     @Autowired
-    public ReviewServiceImpl(ReviewRepository reviewRepository, CommonService commonService, ReviewValidationService reviewValidationService) {
+    public ReviewServiceImpl(ReviewRepository reviewRepository, CommonService commonService, ReviewValidationService reviewValidationService, OrderService orderService) {
         this.reviewRepository = reviewRepository;
         this.commonService = commonService;
         this.reviewValidationService = reviewValidationService;
+        this.orderService = orderService;
     }
 
     @Override
@@ -238,6 +242,7 @@ public class ReviewServiceImpl implements ReviewService {
             Long userId = commonService.getUserIdBySecurityContext();
             Long reviewId = reviewRepository.addReviewDetails(insertReviewRequest, userId);
             reviewRepository.addReviewImages(insertReviewRequest.getImages(), reviewId, userId);
+            orderService.changeOrderStatus(insertReviewRequest.getOrderId(), OrderStatus.REVIEWED);
             return new CommonResponse<>(
                     CommonResponseMessages.SUCCESSFULLY_INSERT_CODE,
                     CommonResponseMessages.SUCCESSFULLY_INSERT_STATUS,

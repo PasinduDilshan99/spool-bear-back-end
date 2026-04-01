@@ -3,6 +3,7 @@ package com.spoolbear.repository;
 import com.spoolbear.model.dto.OrderInsertRequestDto;
 import com.spoolbear.model.dto.OrderMainDetailsDto;
 import com.spoolbear.model.dto.PrintingOrderInsertRequestDto;
+import com.spoolbear.model.enums.OrderStatus;
 import com.spoolbear.model.request.ProductOrderInsertRequest;
 import com.spoolbear.model.response.OrderResponse;
 
@@ -22,4 +23,8 @@ public interface OrderRepository {
     Long addOrder(OrderInsertRequestDto orderInsertRequestDto);
 
     boolean addProductOrder(ProductOrderInsertRequest.OrderProducts orderProducts, Long orderId, Long userId);
+
+    List<OrderMainDetailsDto> getOrderMainDetailsByUserForReviewId(Long userId);
+
+    void changeOrderStatus(Long orderId, OrderStatus orderStatus);
 }

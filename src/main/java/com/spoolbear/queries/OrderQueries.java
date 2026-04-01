@@ -79,4 +79,26 @@ public class OrderQueries {
         LEFT JOIN common_status cs ON po.status = cs.id
         WHERE po.order_id IN (
     """;
+    public static final String GET_ORDER_MAIN_DETAILS_FOR_REVIEW_BY_USER_ID = """
+            SELECT
+            	o.order_id,
+            	o.user_id,
+            	o.total_amount,
+            	o.order_status,
+            	o.payment_status,
+            	o.status,
+            	o.created_at,
+            	o.updated_at,
+            	o.order_type
+            FROM orders o
+            WHERE o.user_id = ?
+            AND o.order_status IN ('CANCELLED','DELIVERED','CONFIRMED','RETURNED')
+            ORDER BY o.created_at DESC
+            """;
+    public static final String CHANGE_ORDER_STATUS = """
+            UPDATE orders
+            SET order_status = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE order_id = ?
+            """;
 }

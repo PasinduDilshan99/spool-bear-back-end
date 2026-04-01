@@ -6,6 +6,7 @@ import com.spoolbear.exception.InternalServerErrorExceptionHandler;
 import com.spoolbear.model.dto.OrderInsertRequestDto;
 import com.spoolbear.model.dto.OrderMainDetailsDto;
 import com.spoolbear.model.dto.PrintingOrderInsertRequestDto;
+import com.spoolbear.model.enums.OrderStatus;
 import com.spoolbear.model.request.ProductOrderInsertRequest;
 import com.spoolbear.model.response.OrderResponse;
 import com.spoolbear.model.response.ProductsCartResponse;
@@ -50,7 +51,7 @@ public class OrderRepositoryImpl implements OrderRepository {
                             .userId(rs.getLong("user_id"))
                             .totalAmount(rs.getDouble("total_amount"))
                             .orderStatus(rs.getString("order_status"))
-                            .orderStatus(rs.getString("payment_status"))
+                            .paymentStatus(rs.getString("payment_status"))
                             .status(rs.getString("status"))
                             .createdDate(rs.getTimestamp("created_at"))
                             .updatedDate(rs.getTimestamp("updated_at"))
@@ -306,6 +307,52 @@ public class OrderRepositoryImpl implements OrderRepository {
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    @Override
+    public List<OrderMainDetailsDto> getOrderMainDetailsByUserForReviewId(Long userId) {
+        try {
+            return jdbcTemplate.query(OrderQueries.GET_ORDER_MAIN_DETAILS_FOR_REVIEW_BY_USER_ID,
+                    new Object[]{userId},
+                    (rs, rowNum) -> OrderMainDetailsDto.builder()
+                            .orderId(rs.getLong("order_id"))
+                            .userId(rs.getLong("user_id"))
+                            .totalAmount(rs.getDouble("total_amount"))
+                            .orderStatus(rs.getString("order_status"))
+                            .paymentStatus(rs.getString("payment_status"))
+                            .status(rs.getString("status"))
+                            .createdDate(rs.getTimestamp("created_at"))
+                            .updatedDate(rs.getTimestamp("updated_at"))
+                            .orderType(rs.getString("order_type"))
+                            .build()
+            );
+        } catch (EmptyResultDataAccessException ex) {
+            throw new DataNotFoundErrorExceptionHandler("No orders found for userId: " + userId);
+        } catch (DataAccessException ex) {
+            throw new DataAccessErrorExceptionHandler("Database error while fetching orders");
+        }
+    }
+
+    @Override
+    public void changeOrderStatus(Long orderId, OrderStatus orderStatus) {
+        try {
+            int rowsAffected = jdbcTemplate.update(
+                    OrderQueries.CHANGE_ORDER_STATUS,
+                    orderStatus.name(),
+                    orderId
+            );
+
+            if (rowsAffected == 0) {
+                throw new DataNotFoundErrorExceptionHandler(
+                        "No order found for orderId: " + orderId
+                );
+            }
+
+        } catch (DataAccessException ex) {
+            throw new DataAccessErrorExceptionHandler(
+                    "Database error while updating order status"
+            );
         }
     }
 

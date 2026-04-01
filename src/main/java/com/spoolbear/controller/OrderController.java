@@ -40,6 +40,14 @@ public class OrderController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @GetMapping(path = "/orders-by-user-for-review")
+    public ResponseEntity<CommonResponse<List<OrderResponse>>> getOrderByuserForReview() {
+        LOGGER.info("{} Start execute get orders by user id for review {}", Constant.DOTS, Constant.DOTS);
+        CommonResponse<List<OrderResponse>> response = orderService.getOrderByuserForReview();
+        LOGGER.info("{} End execute get orders by user id for review  {}", Constant.DOTS, Constant.DOTS);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
     @PostMapping(path = "/add-product-order")
     public ResponseEntity<CommonResponse<InsertResponse>> addProductOrder(@RequestBody ProductOrderInsertRequest productOrderInsertRequest) {
         LOGGER.info("{} Start execute add product order  {}", Constant.DOTS, Constant.DOTS);

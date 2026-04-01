@@ -1,5 +1,6 @@
 package com.spoolbear.service;
 
+import com.spoolbear.model.enums.OrderStatus;
 import com.spoolbear.model.request.DesignOrderInsertRequest;
 import com.spoolbear.model.request.PrintingOrderInsertRequest;
 import com.spoolbear.model.request.ProductOrderInsertRequest;
@@ -17,4 +18,8 @@ public interface OrderService {
     CommonResponse<InsertResponse> addDesignOrder(DesignOrderInsertRequest designOrderInsertRequest);
 
     CommonResponse<InsertResponse> addProductOrder(ProductOrderInsertRequest productOrderInsertRequest);
+
+    CommonResponse<List<OrderResponse>> getOrderByuserForReview();
+
+    void changeOrderStatus(Long orderId, OrderStatus orderStatus);
 }

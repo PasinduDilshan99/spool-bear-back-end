@@ -14,10 +14,7 @@ import com.spoolbear.model.request.DesignOrderInsertRequest;
 import com.spoolbear.model.request.PrintingOrderInsertRequest;
 import com.spoolbear.model.request.ProductOrderInsertRequest;
 import com.spoolbear.model.request.RemoveItemFromCartRequest;
-import com.spoolbear.model.response.CommonResponse;
-import com.spoolbear.model.response.InsertResponse;
-import com.spoolbear.model.response.OrderResponse;
-import com.spoolbear.model.response.ProductResponse;
+import com.spoolbear.model.response.*;
 import com.spoolbear.repository.CartRepository;
 import com.spoolbear.repository.OrderRepository;
 import com.spoolbear.service.CartService;
@@ -270,6 +267,109 @@ public class OrderServiceImpl implements OrderService {
             throw new InternalServerErrorExceptionHandler("Failed to add product order");
         } finally {
             LOGGER.info("End add product order");
+        }
+    }
+
+    @Override
+    public CommonResponse<List<OrderResponse>> getOrderByuserForReview() {
+        LOGGER.info("Start fetching orders by user id for review from repository");
+        try {
+            List<OrderResponse> orderResponses = new ArrayList<>();
+
+            Long userId = commonService.getUserIdBySecurityContext();
+            List<OrderMainDetailsDto> orderMainDetailsDtoList = orderRepository.getOrderMainDetailsByUserForReviewId(userId);
+
+            List<Long> productOrderIds = new ArrayList<>();
+            List<Long> printingOrderIds = new ArrayList<>();
+
+            for (OrderMainDetailsDto orderMainDetailsDto : orderMainDetailsDtoList) {
+                if (orderMainDetailsDto.getOrderType().equalsIgnoreCase("PRINTING")) {
+                    printingOrderIds.add(orderMainDetailsDto.getOrderId());
+                } else if (orderMainDetailsDto.getOrderType().equalsIgnoreCase("PRODUCT")) {
+                    productOrderIds.add(orderMainDetailsDto.getOrderId());
+                } else {
+                    throw new InternalServerErrorExceptionHandler("Invalid Order Type");
+                }
+            }
+
+            List<OrderResponse.printings> printingsList = orderRepository.getPrintingsDetailsByOrderIdList(printingOrderIds);
+            List<OrderResponse.products> productsList = orderRepository.getProductsDetailsByOrderIdList(productOrderIds);
+
+            for (OrderMainDetailsDto orderMainDetailsDto : orderMainDetailsDtoList) {
+                OrderResponse orderResponse = new OrderResponse();
+                if (orderMainDetailsDto.getOrderType().equalsIgnoreCase("PRINTING")) {
+                    orderResponse = OrderResponse.builder()
+                            .orderId(orderMainDetailsDto.getOrderId())
+                            .userId(orderMainDetailsDto.getUserId())
+                            .totalAmount(orderMainDetailsDto.getTotalAmount())
+                            .orderStatus(orderMainDetailsDto.getOrderStatus())
+                            .paymentStatus(orderMainDetailsDto.getPaymentStatus())
+                            .status(orderMainDetailsDto.getStatus())
+                            .createdDate(orderMainDetailsDto.getCreatedDate())
+                            .updatedDate(orderMainDetailsDto.getUpdatedDate())
+                            .orderType(orderMainDetailsDto.getOrderType())
+                            .orderItems(OrderResponse.OrderItems.builder().build())
+                            .build();
+
+                    for (OrderResponse.printings printings : printingsList) {
+                        if (printings.getOrderId().equals(orderMainDetailsDto.getOrderId())) {
+                            orderResponse.getOrderItems().getPrintingsList().add(printings);
+                        }
+                    }
+
+                } else if (orderMainDetailsDto.getOrderType().equalsIgnoreCase("PRODUCT")) {
+                    orderResponse = OrderResponse.builder()
+                            .orderId(orderMainDetailsDto.getOrderId())
+                            .userId(orderMainDetailsDto.getUserId())
+                            .totalAmount(orderMainDetailsDto.getTotalAmount())
+                            .orderStatus(orderMainDetailsDto.getOrderStatus())
+                            .paymentStatus(orderMainDetailsDto.getPaymentStatus())
+                            .status(orderMainDetailsDto.getStatus())
+                            .createdDate(orderMainDetailsDto.getCreatedDate())
+                            .updatedDate(orderMainDetailsDto.getUpdatedDate())
+                            .orderType(orderMainDetailsDto.getOrderType())
+                            .orderItems(OrderResponse.OrderItems.builder().build())
+                            .build();
+
+                    for (OrderResponse.products products : productsList) {
+                        if (products.getProductId().equals(orderMainDetailsDto.getOrderId())) {
+                            orderResponse.getOrderItems().getProductsList().add(products);
+                        }
+                    }
+                }
+                orderResponses.add(orderResponse);
+            }
+
+            return new CommonResponse<>(
+                    CommonResponseMessages.SUCCESSFULLY_RETRIEVE_CODE,
+                    CommonResponseMessages.SUCCESSFULLY_RETRIEVE_STATUS,
+                    CommonResponseMessages.SUCCESSFULLY_RETRIEVE_MESSAGE,
+                    orderResponses,
+                    Instant.now());
+
+        } catch (DataNotFoundErrorExceptionHandler | DataAccessErrorExceptionHandler e) {
+            throw e;
+        } catch (Exception e) {
+            LOGGER.error("Error occurred while fetching orders by user id: {}", e.getMessage(), e);
+            throw new InternalServerErrorExceptionHandler("Failed to fetch orders by user id from database");
+        } finally {
+            LOGGER.info("End fetching orders by user id from repository");
+        }
+    }
+
+    @Override
+    public void changeOrderStatus(Long orderId, OrderStatus orderStatus) {
+        LOGGER.info("Start change the order status from repository");
+        try {
+            orderRepository.changeOrderStatus(orderId,orderStatus);
+
+        } catch (DataNotFoundErrorExceptionHandler | DataAccessErrorExceptionHandler e) {
+            throw e;
+        } catch (Exception e) {
+            LOGGER.error("Error occurred while change the order status : {}", e.getMessage(), e);
+            throw new InternalServerErrorExceptionHandler("Failed to change the order status from database");
+        } finally {
+            LOGGER.info("End change the order status from repository");
         }
     }
 }
