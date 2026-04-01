@@ -1,14 +1,14 @@
 package com.spoolbear.service.impl;
 
-import com.spoolbear.exception.DataNotFoundErrorExceptionHandler;
-import com.spoolbear.exception.InsertFailedErrorExceptionHandler;
-import com.spoolbear.exception.InternalServerErrorExceptionHandler;
-import com.spoolbear.exception.ValidationFailedErrorExceptionHandler;
+import com.spoolbear.exception.*;
 import com.spoolbear.model.request.BrowsingHistoryRequest;
 import com.spoolbear.model.request.InsertBrowserHistoryRequest;
+import com.spoolbear.model.request.RemoveBrowserHistoryListRequest;
+import com.spoolbear.model.request.RemoveBrowserHistoryRequest;
 import com.spoolbear.model.response.BrowserHistoryResponse;
 import com.spoolbear.model.response.CommonResponse;
 import com.spoolbear.model.response.InsertResponse;
+import com.spoolbear.model.response.UpdateResponse;
 import com.spoolbear.repository.BrowserHistoryRepository;
 import com.spoolbear.service.BrowserHistoryService;
 import com.spoolbear.service.CommonService;
@@ -92,5 +92,73 @@ public class BrowserHistoryServiceImpl implements BrowserHistoryService {
             LOGGER.info("End fetching active history data from repository");
         }
     }
+
+    @Override
+    public CommonResponse<UpdateResponse> removeHistoryData(RemoveBrowserHistoryRequest removeBrowserHistoryRequest) {
+        try {
+            browserHistoryValidationService.validateRemoveBrowserHistoryRequest(removeBrowserHistoryRequest);
+            browserHistoryRepository.removeHistoryData(removeBrowserHistoryRequest);
+
+            return new CommonResponse<>(
+                    CommonResponseMessages.SUCCESSFULLY_REMOVE_CODE,
+                    CommonResponseMessages.SUCCESSFULLY_REMOVE_STATUS,
+                    CommonResponseMessages.SUCCESSFULLY_REMOVE_MESSAGE,
+                    new UpdateResponse("Successfully remove browser history request", removeBrowserHistoryRequest.getHistoryDataId()),
+                    Instant.now());
+
+        } catch (ValidationFailedErrorExceptionHandler vfe) {
+            throw new ValidationFailedErrorExceptionHandler("validation failed in the remove browser history request", vfe.getValidationFailedResponses());
+        } catch (UpdateFailedErrorExceptionHandler ufe) {
+            throw new UpdateFailedErrorExceptionHandler(ufe.getMessage());
+        } catch (Exception e) {
+            LOGGER.error(e.toString());
+            throw new InternalServerErrorExceptionHandler("Something went wrong");
+        }
+    }
+
+    @Override
+    public CommonResponse<UpdateResponse> removeAllHistoryData() {
+        try {
+            Long userId = commonService.getUserIdBySecurityContext();
+            browserHistoryRepository.removeAllHistoryData(userId);
+
+            return new CommonResponse<>(
+                    CommonResponseMessages.SUCCESSFULLY_REMOVE_CODE,
+                    CommonResponseMessages.SUCCESSFULLY_REMOVE_STATUS,
+                    CommonResponseMessages.SUCCESSFULLY_REMOVE_MESSAGE,
+                    new UpdateResponse("Successfully remove all browser history request", null),
+                    Instant.now());
+
+        } catch (UpdateFailedErrorExceptionHandler ufe) {
+            throw new UpdateFailedErrorExceptionHandler(ufe.getMessage());
+        } catch (Exception e) {
+            LOGGER.error(e.toString());
+            throw new InternalServerErrorExceptionHandler("Something went wrong");
+        }
+    }
+
+    @Override
+    public CommonResponse<UpdateResponse> removeHistoryDataList(RemoveBrowserHistoryListRequest removeBrowserHistoryListRequest) {
+        try {
+            browserHistoryValidationService.validateRemoveBrowserHistoryListRequest(removeBrowserHistoryListRequest);
+            browserHistoryRepository.removeHistoryDataList(removeBrowserHistoryListRequest);
+
+            return new CommonResponse<>(
+                    CommonResponseMessages.SUCCESSFULLY_REMOVE_CODE,
+                    CommonResponseMessages.SUCCESSFULLY_REMOVE_STATUS,
+                    CommonResponseMessages.SUCCESSFULLY_REMOVE_MESSAGE,
+                    new UpdateResponse("Successfully remove browser history request list", null),
+                    Instant.now());
+
+        } catch (ValidationFailedErrorExceptionHandler vfe) {
+            throw new ValidationFailedErrorExceptionHandler("validation failed in the remove browser history request list", vfe.getValidationFailedResponses());
+        } catch (UpdateFailedErrorExceptionHandler ufe) {
+            throw new UpdateFailedErrorExceptionHandler(ufe.getMessage());
+        } catch (Exception e) {
+            LOGGER.error(e.toString());
+            throw new InternalServerErrorExceptionHandler("Something went wrong");
+        }
+    }
+
 
 }

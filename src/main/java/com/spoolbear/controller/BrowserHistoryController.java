@@ -2,9 +2,12 @@ package com.spoolbear.controller;
 
 import com.spoolbear.model.request.BrowsingHistoryRequest;
 import com.spoolbear.model.request.InsertBrowserHistoryRequest;
+import com.spoolbear.model.request.RemoveBrowserHistoryListRequest;
+import com.spoolbear.model.request.RemoveBrowserHistoryRequest;
 import com.spoolbear.model.response.BrowserHistoryResponse;
 import com.spoolbear.model.response.CommonResponse;
 import com.spoolbear.model.response.InsertResponse;
+import com.spoolbear.model.response.UpdateResponse;
 import com.spoolbear.service.BrowserHistoryService;
 import com.spoolbear.util.Constant;
 import org.slf4j.Logger;
@@ -12,10 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping(path = "/api/v0/browser-history")
@@ -35,6 +35,31 @@ public class BrowserHistoryController {
         LOGGER.info("{} Start execute create history data {}", Constant.DOTS, Constant.DOTS);
         CommonResponse<InsertResponse> response = browserHistoryService.addHistoryData(insertBrowserHistoryRequest);
         LOGGER.info("{} End execute create history data {}", Constant.DOTS, Constant.DOTS);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/remove")
+    public ResponseEntity<CommonResponse<UpdateResponse>> removeHistoryData(@RequestBody RemoveBrowserHistoryRequest removeBrowserHistoryRequest) {
+        LOGGER.info("{} Start execute remove history data {}", Constant.DOTS, Constant.DOTS);
+        CommonResponse<UpdateResponse> response = browserHistoryService.removeHistoryData(removeBrowserHistoryRequest);
+        LOGGER.info("{} End execute create remove data {}", Constant.DOTS, Constant.DOTS);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(path = "/remove-list")
+    public ResponseEntity<CommonResponse<UpdateResponse>> removeHistoryDataList(@RequestBody RemoveBrowserHistoryListRequest removeBrowserHistoryListRequest) {
+        LOGGER.info("{} Start execute remove history data list {}", Constant.DOTS, Constant.DOTS);
+        CommonResponse<UpdateResponse> response = browserHistoryService.removeHistoryDataList(removeBrowserHistoryListRequest);
+        LOGGER.info("{} End execute create remove data list {}", Constant.DOTS, Constant.DOTS);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+    @GetMapping(path = "/remove-all")
+    public ResponseEntity<CommonResponse<UpdateResponse>> removeAllHistoryData() {
+        LOGGER.info("{} Start execute remove all history data {}", Constant.DOTS, Constant.DOTS);
+        CommonResponse<UpdateResponse> response = browserHistoryService.removeAllHistoryData();
+        LOGGER.info("{} End execute create remove all data {}", Constant.DOTS, Constant.DOTS);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

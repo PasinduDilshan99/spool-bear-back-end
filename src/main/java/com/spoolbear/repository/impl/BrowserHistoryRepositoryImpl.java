@@ -5,6 +5,8 @@ import com.spoolbear.exception.InsertFailedErrorExceptionHandler;
 import com.spoolbear.exception.InternalServerErrorExceptionHandler;
 import com.spoolbear.model.request.BrowsingHistoryRequest;
 import com.spoolbear.model.request.InsertBrowserHistoryRequest;
+import com.spoolbear.model.request.RemoveBrowserHistoryListRequest;
+import com.spoolbear.model.request.RemoveBrowserHistoryRequest;
 import com.spoolbear.model.response.BrowserHistoryResponse;
 import com.spoolbear.queries.BrowserHistoryQueries;
 import com.spoolbear.repository.BrowserHistoryRepository;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Repository
@@ -62,6 +65,7 @@ public class BrowserHistoryRepositoryImpl implements BrowserHistoryRepository {
                 FROM browser_history bh
                 LEFT JOIN common_status cs ON bh.status_id = cs.id
                 WHERE bh.user_id = ?
+                AND cs.name = 'ACTIVE'
                 """;
 
             List<Object> params = new ArrayList<>();
@@ -122,6 +126,107 @@ public class BrowserHistoryRepositoryImpl implements BrowserHistoryRepository {
         } catch (Exception ex) {
             LOGGER.error("Unexpected error while fetching history: {}", ex.getMessage(), ex);
             throw new InternalServerErrorExceptionHandler("Unexpected error occurred while fetching history");
+        }
+    }
+
+    @Override
+    public void removeHistoryData(RemoveBrowserHistoryRequest request) {
+        try {
+            Integer terminatedStatusId = jdbcTemplate.queryForObject(
+                    "SELECT id FROM common_status WHERE name = ?",
+                    Integer.class,
+                    "TERMINATED"
+            );
+            int rows = jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(
+                        BrowserHistoryQueries.TERMINATE_BROWSER_HISTORY
+                );
+
+                ps.setInt(1, terminatedStatusId);
+                ps.setLong(2, request.getHistoryDataId());
+
+                return ps;
+            });
+
+            if (rows == 0) {
+                throw new RuntimeException("No browser history found for given ID");
+            }
+
+        } catch (Exception e) {
+            LOGGER.error("Error removing browser history: {}", e.toString(), e);
+            throw new InsertFailedErrorExceptionHandler(
+                    "Something went wrong while removing browser history"
+            );
+        }
+    }
+
+    @Override
+    public void removeAllHistoryData(Long userId) {
+        try {
+            Integer terminatedStatusId = jdbcTemplate.queryForObject(
+                    "SELECT id FROM common_status WHERE name = ?",
+                    Integer.class,
+                    "TERMINATED"
+            );
+            int rows = jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(
+                        BrowserHistoryQueries.TERMINATE_ALL_BROWSER_HISTORY_BY_USER
+                );
+
+                ps.setInt(1, terminatedStatusId);
+                ps.setLong(2, userId);
+
+                return ps;
+            });
+
+            if (rows == 0) {
+                LOGGER.warn("No browser history records found for userId: {}", userId);
+            } else {
+                LOGGER.info("Terminated {} browser history records for userId: {}", rows, userId);
+            }
+
+        } catch (Exception e) {
+            LOGGER.error("Error removing all browser history for userId {}: {}", userId, e.toString(), e);
+            throw new InsertFailedErrorExceptionHandler(
+                    "Something went wrong while removing all browser history"
+            );
+        }
+    }
+
+    @Override
+    public void removeHistoryDataList(RemoveBrowserHistoryListRequest request) {
+        List<Long> ids = request.getHistoryDataIds();
+        if (ids == null || ids.isEmpty()) {
+            throw new IllegalArgumentException("History ID list cannot be empty");
+        }
+
+        try {
+            Integer terminatedStatusId = jdbcTemplate.queryForObject(
+                    "SELECT id FROM common_status WHERE name = ?",
+                    Integer.class,
+                    "TERMINATED"
+            );
+            String placeholders = String.join(",", Collections.nCopies(ids.size(), "?"));
+
+            String sql = "UPDATE browser_history SET status_id = ? WHERE id IN (" + placeholders + ")";
+
+            jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(sql);
+
+                ps.setInt(1, terminatedStatusId);
+
+                for (int i = 0; i < ids.size(); i++) {
+                    ps.setLong(i + 2, ids.get(i));
+                }
+
+                return ps;
+            });
+
+        } catch (Exception e) {
+            LOGGER.error("Error removing browser history list: {}", e.toString(), e);
+            throw new InsertFailedErrorExceptionHandler(
+                    "Something went wrong while removing browser history list"
+            );
         }
     }
 }
