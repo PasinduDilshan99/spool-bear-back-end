@@ -1,0 +1,531 @@
+package com.spoolbear.queries;
+
+public class ReviewQueries {
+    public static final String GET_REVIEW_DETAILS = """
+            SELECT
+              pr.review_id AS review_id,
+              pr.order_id AS order_id,
+              pr.order_type AS order_type,
+
+              CASE
+                  WHEN pr.order_type = 'PRINTING' THEN po.printing_order_id
+                  ELSE p.product_id
+              END AS product_id,
+
+              CASE
+                  WHEN pr.order_type = 'PRINTING' THEN po.custom_text
+                  ELSE p.name
+              END AS product_name,
+
+              pr.comment AS review_comment,
+              pr.rating,
+              cs_pr.name AS review_status,
+              pru.username AS review_created_by,
+              pru.image_url AS review_created_image_url,
+              pr.created_at AS review_created_at,
+              pr.updated_by AS review_updated_by,
+              pr.updated_at AS review_updated_at,
+
+              ri.review_image_id AS image_id,
+              ri.image_url AS image_url,
+              ri.created_by AS image_created_by,
+              ri.created_at AS image_created_at,
+
+              prr.id AS review_reaction_id,
+              prr.product_review_id AS reaction_review_id,
+              prr.user_id AS reaction_user_id,
+              u1.username AS reaction_user_name,
+              rt.name AS reaction_type,
+              cs_prr.name AS review_reaction_status,
+              prr.created_at AS reaction_created_at,
+
+              prc.id AS comment_id,
+              prc.product_review_id AS comment_review_id,
+              prc.user_id AS comment_user_id,
+              u2.username AS comment_user_name,
+              u2.image_url AS comment_image_url,
+              prc.parent_comment_id,
+              prc.comment AS comment_text,
+              cs_prc.name AS comment_status,
+              prc.created_at AS comment_created_at,
+              prc.created_by AS comment_created_by,
+
+              prcr.id AS comment_reaction_id,
+              prcr.comment_id AS comment_reaction_comment_id,
+              prcr.user_id AS comment_reaction_user_id,
+              u3.username AS comment_reaction_user_name,
+              rt2.name AS comment_reaction_type,
+              cs_prcr.name AS comment_reaction_status,
+              prcr.created_by AS comment_reaction_created_by,
+              prcr.created_at AS comment_reaction_created_at
+
+          FROM product_reviews pr
+          LEFT JOIN user pru
+              ON pru.user_id = pr.user_id
+
+          LEFT JOIN products p
+              ON p.product_id = pr.product_id
+
+          LEFT JOIN common_status cs_pr
+              ON cs_pr.id = pr.status
+
+          LEFT JOIN review_images ri
+              ON ri.review_id = pr.review_id
+
+          LEFT JOIN product_review_reaction prr
+              ON prr.product_review_id = pr.review_id
+              AND prr.status = 1
+
+          LEFT JOIN reaction_type rt
+              ON rt.id = prr.reaction_type_id
+
+          LEFT JOIN user u1
+              ON u1.user_id = prr.user_id
+
+          LEFT JOIN common_status cs_prr
+              ON cs_prr.id = prr.status
+
+          LEFT JOIN product_review_comment prc
+              ON prc.product_review_id = pr.review_id
+              AND prc.status = 1
+
+          LEFT JOIN user u2
+              ON u2.user_id = prc.user_id
+
+          LEFT JOIN common_status cs_prc
+              ON cs_prc.id = prc.status
+
+          LEFT JOIN product_review_comment_reaction prcr
+              ON prcr.comment_id = prc.id
+              AND prcr.status = 1
+
+          LEFT JOIN reaction_type rt2
+              ON rt2.id = prcr.reaction_type_id
+
+          LEFT JOIN user u3
+              ON u3.user_id = prcr.user_id
+
+          LEFT JOIN common_status cs_prcr
+              ON cs_prcr.id = prcr.status
+
+          LEFT JOIN printing_orders po
+              ON po.order_id = pr.order_id
+
+          ORDER BY pr.review_id, prc.id, prcr.id
+            """;
+
+    public static final String GET_REVIEW_DETAILS_BY_ID = """
+            SELECT
+                pr.review_id AS review_id,
+                pr.order_id AS order_id,
+                pr.order_type AS order_type,
+            
+                CASE
+                    WHEN pr.order_type = 'PRINTING' THEN po.printing_order_id
+                    ELSE p.product_id
+                END AS product_id,
+            
+                CASE
+                    WHEN pr.order_type = 'PRINTING' THEN po.custom_text
+                    ELSE p.name
+                END AS product_name,
+            
+                pr.comment AS review_comment,
+                pr.rating,
+                cs_pr.name AS review_status,
+                pru.username AS review_created_by,
+                pru.image_url AS review_created_image_url,
+                pr.created_at AS review_created_at,
+                pr.updated_by AS review_updated_by,
+                pr.updated_at AS review_updated_at,
+            
+                ri.review_image_id AS image_id,
+                ri.image_url AS image_url,
+                ri.created_by AS image_created_by,
+                ri.created_at AS image_created_at,
+            
+                prr.id AS review_reaction_id,
+                prr.product_review_id AS reaction_review_id,
+                prr.user_id AS reaction_user_id,
+                u1.username AS reaction_user_name,
+                rt.name AS reaction_type,
+                cs_prr.name AS review_reaction_status,
+                prr.created_at AS reaction_created_at,
+            
+                prc.id AS comment_id,
+                prc.product_review_id AS comment_review_id,
+                prc.user_id AS comment_user_id,
+                u2.username AS comment_user_name,
+                u2.image_url AS comment_image_url,
+                prc.parent_comment_id,
+                prc.comment AS comment_text,
+                cs_prc.name AS comment_status,
+                prc.created_at AS comment_created_at,
+                prc.created_by AS comment_created_by,
+            
+                prcr.id AS comment_reaction_id,
+                prcr.comment_id AS comment_reaction_comment_id,
+                prcr.user_id AS comment_reaction_user_id,
+                u3.username AS comment_reaction_user_name,
+                rt2.name AS comment_reaction_type,
+                cs_prcr.name AS comment_reaction_status,
+                prcr.created_by AS comment_reaction_created_by,
+                prcr.created_at AS comment_reaction_created_at
+            
+            FROM product_reviews pr
+            LEFT JOIN user pru
+            	ON pru.user_id = pr.user_id
+            
+            LEFT JOIN products p
+                ON p.product_id = pr.product_id
+            
+            LEFT JOIN common_status cs_pr
+                ON cs_pr.id = pr.status
+            
+            LEFT JOIN review_images ri
+                ON ri.review_id = pr.review_id
+            
+            LEFT JOIN product_review_reaction prr
+                ON prr.product_review_id = pr.review_id
+                AND prr.status = 1
+            
+            LEFT JOIN reaction_type rt
+                ON rt.id = prr.reaction_type_id
+            
+            LEFT JOIN user u1
+                ON u1.user_id = prr.user_id
+            
+            LEFT JOIN common_status cs_prr
+                ON cs_prr.id = prr.status
+            
+            LEFT JOIN product_review_comment prc
+                ON prc.product_review_id = pr.review_id
+                AND prc.status = 1
+            
+            LEFT JOIN user u2
+                ON u2.user_id = prc.user_id
+            
+            LEFT JOIN common_status cs_prc
+                ON cs_prc.id = prc.status
+            
+            LEFT JOIN product_review_comment_reaction prcr
+                ON prcr.comment_id = prc.id
+                AND prcr.status = 1
+            
+            LEFT JOIN reaction_type rt2
+                ON rt2.id = prcr.reaction_type_id
+            
+            LEFT JOIN user u3
+                ON u3.user_id = prcr.user_id
+            
+            LEFT JOIN common_status cs_prcr
+                ON cs_prcr.id = prcr.status
+            
+            LEFT JOIN printing_orders po
+                ON po.order_id = pr.order_id
+            
+            WHERE pr.user_id = ?
+            
+            ORDER BY pr.review_id, prc.id, prcr.id
+            """;
+    public static final String GET_REVIEW_PREVIOUS_REACT = """
+            SELECT
+            	prr.product_review_id,
+                prr.user_id,
+                rt.name,
+                prr.status
+            FROM product_review_reaction prr
+            LEFT JOIN reaction_type rt ON prr.reaction_type_id = rt.id
+            WHERE prr.product_review_id = ? AND prr.user_id = ?
+            """;
+    public static final String ADD_REACTION_TO_REVIEW = """
+            INSERT INTO product_review_reaction (product_review_id, user_id, reaction_type_id, status, created_by)
+                               SELECT ?, ?, rt.id, 1, ?
+                               FROM reaction_type rt
+                               WHERE rt.name = ? AND rt.status = 1
+                               ON DUPLICATE KEY UPDATE
+                                   reaction_type_id = VALUES(reaction_type_id),
+                                   status = 1,
+                                   updated_at = CURRENT_TIMESTAMP
+            """;
+    public static final String REMOVE_REVIEW_REACTION = """
+            UPDATE product_review_reaction
+            SET status = 2,
+                terminated_at = CURRENT_TIMESTAMP,
+                terminated_by = ?
+            WHERE product_review_id = ? AND user_id = ? AND status = 1
+            """ ;
+    public static final String INSERT_REVIEW_COMMENT = """
+            INSERT INTO product_review_comment (
+                product_review_id,
+                user_id,
+                parent_comment_id,
+                comment,
+                status,
+                created_by
+            )
+            VALUES (?, ?, ?, ?, 1, ?)
+            """;
+    public static final String IS_REVIEW_COMMENT_ALREADY_REACTED = """
+            SELECT
+                prcr.comment_id,
+                prcr.user_id,
+                rt.name,
+                prcr.status
+            FROM product_review_comment_reaction prcr
+            LEFT JOIN reaction_type rt
+                ON prcr.reaction_type_id = rt.id
+            WHERE prcr.comment_id = ?
+              AND prcr.user_id = ?
+            """;
+    public static final String ADD_REACTION_TO_REVIEW_COMMENT = """
+            INSERT INTO product_review_comment_reaction (
+                                 comment_id,
+                                 user_id,
+                                 reaction_type_id,
+                                 status,
+                                 created_by
+                             )
+                             SELECT
+                                 prc.id,
+                                 ?,
+                                 rt.id,
+                                 1,
+                                 ?
+                             FROM product_review_comment prc
+                             JOIN reaction_type rt
+                                 ON rt.name = ?
+                                AND rt.status = 1
+                             WHERE prc.id = ?
+                             ON DUPLICATE KEY UPDATE
+                                 reaction_type_id = VALUES(reaction_type_id),
+                                 updated_by = VALUES(created_by),
+                                 updated_at = CURRENT_TIMESTAMP
+            """;
+    public static final String REMOVE_REVIEW_COMMENT_REACTION = """
+            UPDATE product_review_comment_reaction
+            SET status = 2,
+                terminated_at = CURRENT_TIMESTAMP,
+                terminated_by = ?
+            WHERE comment_id = ? AND user_id = ?
+            """;
+    public static final String CHANGE_REVIEW_REACTION_STATUS = """
+            UPDATE product_review_reaction
+            SET status = 1,
+                updated_at = CURRENT_TIMESTAMP,
+                updated_by = ?
+            WHERE product_review_id = ? AND user_id = ?
+            """;
+    public static final String CHNAGE_COMMENT_REACTION_STATUS = """
+            UPDATE product_review_comment_reaction
+            SET status = 1,
+                updated_at = CURRENT_TIMESTAMP,
+                updated_by = ?
+            WHERE comment_id = ? AND user_id = ?
+            """;
+    public static final String GET_REVIEW_DETAILS_BY_REVIEW_ID = """
+            SELECT
+                pr.review_id AS review_id,
+                pr.order_id AS order_id,
+                pr.order_type AS order_type,
+                CASE
+                    WHEN pr.order_type = 'PRINTING' THEN po.printing_order_id
+                    ELSE p.product_id
+                END AS product_id,
+                CASE
+                    WHEN pr.order_type = 'PRINTING' THEN po.custom_text
+                    ELSE p.name
+                END AS product_name,
+                pr.comment AS review_comment,
+                pr.rating,
+                cs_pr.name AS review_status,
+                pru.username AS review_created_by,
+                pru.image_url AS review_created_image_url,
+                pr.created_at AS review_created_at,
+                pr.updated_by AS review_updated_by,
+                pr.updated_at AS review_updated_at,
+                ri.review_image_id AS image_id,
+                ri.image_url AS image_url,
+                ri.created_by AS image_created_by,
+                ri.created_at AS image_created_at,
+                prr.id AS review_reaction_id,
+                prr.product_review_id AS reaction_review_id,
+                prr.user_id AS reaction_user_id,
+                u1.username AS reaction_user_name,
+                rt.name AS reaction_type,
+                cs_prr.name AS review_reaction_status,
+                prr.created_at AS reaction_created_at,
+                prc.id AS comment_id,
+                prc.product_review_id AS comment_review_id,
+                prc.user_id AS comment_user_id,
+                u2.username AS comment_user_name,
+                u2.image_url AS comment_image_url,
+                prc.parent_comment_id,
+                prc.comment AS comment_text,
+                cs_prc.name AS comment_status,
+                prc.created_at AS comment_created_at,
+                prc.created_by AS comment_created_by,
+                prcr.id AS comment_reaction_id,
+                prcr.comment_id AS comment_reaction_comment_id,
+                prcr.user_id AS comment_reaction_user_id,
+                u3.username AS comment_reaction_user_name,
+                rt2.name AS comment_reaction_type,
+                cs_prcr.name AS comment_reaction_status,
+                prcr.created_by AS comment_reaction_created_by,
+                prcr.created_at AS comment_reaction_created_at
+            FROM product_reviews pr
+            LEFT JOIN user pru
+            	ON pru.user_id = pr.user_id
+            LEFT JOIN products p
+                ON p.product_id = pr.product_id
+            LEFT JOIN common_status cs_pr
+                ON cs_pr.id = pr.status
+            LEFT JOIN review_images ri
+                ON ri.review_id = pr.review_id
+            LEFT JOIN product_review_reaction prr
+                ON prr.product_review_id = pr.review_id
+                AND prr.status = 1
+            LEFT JOIN reaction_type rt
+                ON rt.id = prr.reaction_type_id
+            LEFT JOIN user u1
+                ON u1.user_id = prr.user_id
+            LEFT JOIN common_status cs_prr
+                ON cs_prr.id = prr.status
+            LEFT JOIN product_review_comment prc
+                ON prc.product_review_id = pr.review_id
+                AND prc.status = 1
+            LEFT JOIN user u2
+                ON u2.user_id = prc.user_id
+            LEFT JOIN common_status cs_prc
+                ON cs_prc.id = prc.status
+            LEFT JOIN product_review_comment_reaction prcr
+                ON prcr.comment_id = prc.id
+                AND prcr.status = 1
+            LEFT JOIN reaction_type rt2
+                ON rt2.id = prcr.reaction_type_id
+            LEFT JOIN user u3
+                ON u3.user_id = prcr.user_id
+            LEFT JOIN common_status cs_prcr
+                ON cs_prcr.id = prcr.status
+            LEFT JOIN printing_orders po
+                ON po.order_id = pr.order_id
+            WHERE pr.review_id = ?
+            ORDER BY pr.review_id, prc.id, prcr.id;
+            """;
+
+    public static final String GET_REVIEW_DETAILS_BY_PRODUCT_ID = """
+            SELECT
+                pr.review_id AS review_id,
+                pr.order_id AS order_id,
+                pr.order_type AS order_type,
+            
+                CASE
+                    WHEN pr.order_type = 'PRINTING' THEN po.printing_order_id
+                    ELSE p.product_id
+                END AS product_id,
+            
+                CASE
+                    WHEN pr.order_type = 'PRINTING' THEN po.custom_text
+                    ELSE p.name
+                END AS product_name,
+            
+                pr.comment AS review_comment,
+                pr.rating,
+                cs_pr.name AS review_status,
+                pru.username AS review_created_by,
+                pru.image_url AS review_created_image_url,
+                pr.created_at AS review_created_at,
+                pr.updated_by AS review_updated_by,
+                pr.updated_at AS review_updated_at,
+            
+                ri.review_image_id AS image_id,
+                ri.image_url AS image_url,
+                ri.created_by AS image_created_by,
+                ri.created_at AS image_created_at,
+            
+                prr.id AS review_reaction_id,
+                prr.product_review_id AS reaction_review_id,
+                prr.user_id AS reaction_user_id,
+                u1.username AS reaction_user_name,
+                rt.name AS reaction_type,
+                cs_prr.name AS review_reaction_status,
+                prr.created_at AS reaction_created_at,
+            
+                prc.id AS comment_id,
+                prc.product_review_id AS comment_review_id,
+                prc.user_id AS comment_user_id,
+                u2.username AS comment_user_name,
+                u2.image_url AS comment_image_url,
+                prc.parent_comment_id,
+                prc.comment AS comment_text,
+                cs_prc.name AS comment_status,
+                prc.created_at AS comment_created_at,
+                prc.created_by AS comment_created_by,
+            
+                prcr.id AS comment_reaction_id,
+                prcr.comment_id AS comment_reaction_comment_id,
+                prcr.user_id AS comment_reaction_user_id,
+                u3.username AS comment_reaction_user_name,
+                rt2.name AS comment_reaction_type,
+                cs_prcr.name AS comment_reaction_status,
+                prcr.created_by AS comment_reaction_created_by,
+                prcr.created_at AS comment_reaction_created_at
+            
+            FROM product_reviews pr
+            
+            LEFT JOIN user pru
+            	ON pru.user_id = pr.user_id
+            
+            LEFT JOIN products p
+                ON p.product_id = pr.product_id
+            
+            LEFT JOIN common_status cs_pr
+                ON cs_pr.id = pr.status
+            
+            LEFT JOIN review_images ri
+                ON ri.review_id = pr.review_id
+            
+            LEFT JOIN product_review_reaction prr
+                ON prr.product_review_id = pr.review_id
+                AND prr.status = 1
+            
+            LEFT JOIN reaction_type rt
+                ON rt.id = prr.reaction_type_id
+            
+            LEFT JOIN user u1
+                ON u1.user_id = prr.user_id
+            
+            LEFT JOIN common_status cs_prr
+                ON cs_prr.id = prr.status
+            
+            LEFT JOIN product_review_comment prc
+                ON prc.product_review_id = pr.review_id
+                AND prc.status = 1
+            
+            LEFT JOIN user u2
+                ON u2.user_id = prc.user_id
+            
+            LEFT JOIN common_status cs_prc
+                ON cs_prc.id = prc.status
+            
+            LEFT JOIN product_review_comment_reaction prcr
+                ON prcr.comment_id = prc.id
+                AND prcr.status = 1
+            
+            LEFT JOIN reaction_type rt2
+                ON rt2.id = prcr.reaction_type_id
+            
+            LEFT JOIN user u3
+                ON u3.user_id = prcr.user_id
+            
+            LEFT JOIN common_status cs_prcr
+                ON cs_prcr.id = prcr.status
+            
+            LEFT JOIN printing_orders po
+                ON po.order_id = pr.order_id
+            
+            WHERE p.product_id = ?
+            
+            ORDER BY pr.review_id, prc.id, prcr.id
+            """;
+}
