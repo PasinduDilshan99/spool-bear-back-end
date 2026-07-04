@@ -144,10 +144,10 @@ public class JwtServiceImpl implements JwtService {
     public ResponseCookie buildAccessTokenCookie(String token) {
         return ResponseCookie.from(accessCookieName, token)
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .maxAge(Duration.ofSeconds(accessCookieMaxAge))
-                .sameSite("Lax")
+                .sameSite("None")
                 .domain(".spoolbear.com")
                 .build();
     }
@@ -156,10 +156,10 @@ public class JwtServiceImpl implements JwtService {
     public ResponseCookie buildRefreshTokenCookie(String token) {
         return ResponseCookie.from(refreshCookieName, token)
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .maxAge(Duration.ofSeconds(refreshCookieMaxAge))
-                .sameSite("Lax")
+                .sameSite("None")
                 .domain(".spoolbear.com")
                 .build();
     }
@@ -215,10 +215,10 @@ public class JwtServiceImpl implements JwtService {
     public ResponseCookie buildLogoutAccessTokenCookie() {
         return ResponseCookie.from(accessCookieName, "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .maxAge(0)
-                .sameSite("Lax")
+                .sameSite("None")
                 .domain(".spoolbear.com")
                 .build();
     }
@@ -227,10 +227,10 @@ public class JwtServiceImpl implements JwtService {
     public ResponseCookie buildLogoutRefreshTokenCookie() {
         return ResponseCookie.from(refreshCookieName, "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path("/")
                 .maxAge(0)
-                .sameSite("Lax")
+                .sameSite("None")
                 .domain(".spoolbear.com")
                 .build();
     }
