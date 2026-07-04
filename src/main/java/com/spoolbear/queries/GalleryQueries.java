@@ -7,7 +7,7 @@ public class GalleryQueries {
                 g.id AS image_id,
                 g.name AS image_name,
                 g.description AS image_description,
-                g.location,
+                g.material,
                 g.image_link,
                 g.image_owner,
                 g.image_source,

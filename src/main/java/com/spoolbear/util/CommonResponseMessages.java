@@ -6,6 +6,14 @@ public class CommonResponseMessages {
     public static final String SUCCESSFULLY_INSERT_STATUS = "SUCCESSFULLY_INSERT";
     public static final String SUCCESSFULLY_INSERT_MESSAGE = "SUCCESSFULLY_INSERT";
 
+    public static final int SUCCESSFULLY_REMOVE_CODE = 200;
+    public static final String SUCCESSFULLY_REMOVE_STATUS = "REMOVE_INSERT";
+    public static final String SUCCESSFULLY_REMOVE_MESSAGE = "REMOVE_INSERT";
+
+    public static final int UNSUCCESSFULLY_INSERT_CODE = 400;
+    public static final String UNSUCCESSFULLY_INSERT_STATUS = "UNSUCCESSFULLY_INSERT";
+    public static final String UNSUCCESSFULLY_INSERT_MESSAGE = "UNSUCCESSFULLY_INSERT";
+
     public static final int SUCCESSFULLY_VALIDATE_CODE = 200;
     public static final String SUCCESSFULLY_VALIDATE_STATUS = "SUCCESSFULLY_VALIDATE";
     public static final String SUCCESSFULLY_VALIDATE_MESSAGE = "SUCCESSFULLY_VALIDATE";

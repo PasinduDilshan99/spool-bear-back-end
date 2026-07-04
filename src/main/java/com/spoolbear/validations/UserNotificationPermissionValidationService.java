@@ -1,0 +1,7 @@
+package com.spoolbear.validations;
+
+import com.spoolbear.model.request.UpdateUserNotificationPermissionRequest;
+
+public interface UserNotificationPermissionValidationService {
+    void validateUpdateUserNotificationPermissionRequest(UpdateUserNotificationPermissionRequest updateUserNotificationPermissionRequest);
+}

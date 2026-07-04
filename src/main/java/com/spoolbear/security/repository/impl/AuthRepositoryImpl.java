@@ -1,7 +1,13 @@
 package com.spoolbear.security.repository.impl;
 
+import com.spoolbear.exception.DataAccessErrorExceptionHandler;
+import com.spoolbear.exception.DataNotFoundErrorExceptionHandler;
 import com.spoolbear.exception.InternalServerErrorExceptionHandler;
 import com.spoolbear.exception.UserRegisterFailedErrorExceptionHandler;
+import com.spoolbear.model.request.SecretQuestionsUpdateRequest;
+import com.spoolbear.model.response.SecretQuesionsAnswersDto;
+import com.spoolbear.model.response.SecretQuestionResponse;
+import com.spoolbear.queries.AuthQueries;
 import com.spoolbear.security.model.RegisterUser;
 import com.spoolbear.security.model.User;
 import com.spoolbear.security.repository.AuthRepository;
@@ -18,6 +24,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -134,4 +141,224 @@ public class AuthRepositoryImpl implements AuthRepository {
         }
     }
 
+    @Override
+    public List<SecretQuesionsAnswersDto> getSecretQuestionsAndAnswersByUsername(String username) {
+
+        try {
+            LOGGER.info("Fetching secret questions and answers for username: {}", username);
+
+            return jdbcTemplate.query(
+                    AuthQueries.GET_SECRET_QUESTIONS_AND_ANSWERS_BY_USERNAME,
+                    new Object[]{username},
+                    (rs, rowNum) -> SecretQuesionsAnswersDto.builder()
+                            .secretQuestionId(rs.getLong("secret_question_id"))
+                            .secretQuestion(rs.getString("question"))
+                            .answer(rs.getString("secret_answer"))
+                            .build()
+            );
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Database error while fetching secret questions and answers: {}", ex.getMessage(), ex);
+            throw new DataAccessErrorExceptionHandler("Failed to fetch secret questions and answers");
+        } catch (Exception ex) {
+            LOGGER.error("Unexpected error while fetching secret questions and answers: {}", ex.getMessage(), ex);
+            throw new InternalServerErrorExceptionHandler("Unexpected error occurred while fetching secret questions and answers");
+        }
+    }
+
+
+    @Override
+    public void resetPassword(String username, String encodedPassword) {
+
+        try {
+            LOGGER.info("Resetting password for username: {}", username);
+
+            int rowsAffected = jdbcTemplate.update(
+                    AuthQueries.RESET_PASSWORD_BY_USERNAME,
+                    encodedPassword,
+                    username
+            );
+
+            if (rowsAffected == 0) {
+                LOGGER.warn("No user found with username: {}", username);
+                throw new DataNotFoundErrorExceptionHandler("User not found");
+            }
+
+            LOGGER.info("Password reset successful for username: {}", username);
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Database error while resetting password: {}", ex.getMessage(), ex);
+            throw new DataAccessErrorExceptionHandler("Failed to reset password");
+        } catch (Exception ex) {
+            LOGGER.error("Unexpected error while resetting password: {}", ex.getMessage(), ex);
+            throw new InternalServerErrorExceptionHandler("Unexpected error occurred while resetting password");
+        }
+    }
+
+    @Override
+    public void changePassword(Long userId, String encodedPassword, String newPassword) {
+
+        try {
+            LOGGER.info("Changing password for userId: {}", userId);
+
+            int rowsAffected = jdbcTemplate.update(
+                    AuthQueries.CHANGE_PASSWORD_BY_USER_ID,
+                    encodedPassword,
+                    userId
+            );
+
+            if (rowsAffected == 0) {
+                LOGGER.warn("No user found with userId: {}", userId);
+                throw new DataNotFoundErrorExceptionHandler("User not found");
+            }
+
+            LOGGER.info("Password changed successfully for userId: {}", userId);
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Database error while changing password: {}", ex.getMessage(), ex);
+            throw new DataAccessErrorExceptionHandler("Failed to change password");
+        } catch (Exception ex) {
+            LOGGER.error("Unexpected error while changing password: {}", ex.getMessage(), ex);
+            throw new InternalServerErrorExceptionHandler("Unexpected error occurred while changing password");
+        }
+    }
+
+    @Override
+    public void addSecretQuestions(Long userId, List<SecretQuestionsUpdateRequest.SecretQuestion> addQuestions) {
+
+        try {
+            LOGGER.info("Adding secret questions for userId: {}", userId);
+
+            jdbcTemplate.batchUpdate(
+                    AuthQueries.INSERT_USER_SECRET_QUESTION,
+                    addQuestions,
+                    addQuestions.size(),
+                    (ps, question) -> {
+                        ps.setLong(1, userId);
+                        ps.setLong(2, question.getQuestion());
+                        ps.setString(3, question.getAnswer()); // plain text for development
+                    }
+            );
+
+            LOGGER.info("Secret questions added successfully");
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Error adding secret questions", ex);
+            throw new DataAccessErrorExceptionHandler("Failed to add secret questions");
+        }
+    }
+
+
+    @Override
+    public void updateSecretQuestions(Long userId, List<SecretQuestionsUpdateRequest.SecretQuestion> updateQuestions) {
+
+        try {
+            LOGGER.info("Updating secret questions for userId: {}", userId);
+
+            jdbcTemplate.batchUpdate(
+                    AuthQueries.UPDATE_USER_SECRET_QUESTION,
+                    updateQuestions,
+                    updateQuestions.size(),
+                    (ps, question) -> {
+                        ps.setString(1, question.getAnswer());
+                        ps.setLong(2, userId);
+                        ps.setLong(3, question.getQuestion());
+                    }
+            );
+
+            LOGGER.info("Secret questions updated successfully");
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Error updating secret questions", ex);
+            throw new DataAccessErrorExceptionHandler("Failed to update secret questions");
+        }
+    }
+
+
+    @Override
+    public void removeSecretQuestions(Long userId, List<Long> removeQuestionsIds) {
+
+        try {
+            LOGGER.info("Removing secret questions for userId: {}", userId);
+
+            jdbcTemplate.batchUpdate(
+                    AuthQueries.REMOVE_USER_SECRET_QUESTION,
+                    removeQuestionsIds,
+                    removeQuestionsIds.size(),
+                    (ps, questionId) -> {
+                        ps.setLong(1, userId);
+                        ps.setLong(2, questionId);
+                    }
+            );
+
+            LOGGER.info("Secret questions removed successfully");
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Error removing secret questions", ex);
+            throw new DataAccessErrorExceptionHandler("Failed to remove secret questions");
+        }
+    }
+
+    @Override
+    public List<SecretQuestionResponse> getActiveScretQuestions() {
+
+        try {
+            LOGGER.info("Fetching active secret questions");
+
+            return jdbcTemplate.query(
+                    AuthQueries.GET_ACTIVE_SECRET_QUESTIONS,
+                    (rs, rowNum) -> SecretQuestionResponse.builder()
+                            .questionId(rs.getLong("secret_question_id"))
+                            .question(rs.getString("question"))
+                            .build()
+            );
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Database error while fetching secret questions: {}", ex.getMessage(), ex);
+            throw new DataAccessErrorExceptionHandler("Failed to fetch secret questions");
+        } catch (Exception ex) {
+            LOGGER.error("Unexpected error while fetching secret questions: {}", ex.getMessage(), ex);
+            throw new InternalServerErrorExceptionHandler("Unexpected error occurred while fetching secret questions");
+        }
+    }
+
+    @Override
+    public String getPasswordByUsername(String username) {
+
+        try {
+            return jdbcTemplate.queryForObject(
+                    AuthQueries.GET_PASSWORD_BY_USERNAME,
+                    new Object[]{username},
+                    String.class
+            );
+        } catch (EmptyResultDataAccessException ex) {
+            throw new DataNotFoundErrorExceptionHandler("User not found");
+        } catch (DataAccessException ex) {
+            throw new DataAccessErrorExceptionHandler("Database error occurred");
+        }
+    }
+
+    @Override
+    public List<SecretQuesionsAnswersDto> getSecretQuestionsAndAnswersByUserId(Long userId) {
+        try {
+            LOGGER.info("Fetching secret questions and answers for userId: {}", userId);
+
+            return jdbcTemplate.query(
+                    AuthQueries.GET_SECRET_QUESTIONS_AND_ANSWERS_BY_USER_ID,
+                    new Object[]{userId},
+                    (rs, rowNum) -> SecretQuesionsAnswersDto.builder()
+                            .secretQuestionId(rs.getLong("secret_question_id"))
+                            .secretQuestion(rs.getString("question"))
+                            .answer(rs.getString("secret_answer"))
+                            .build()
+            );
+
+        } catch (DataAccessException ex) {
+            LOGGER.error("Database error while fetching secret questions and answers: {}", ex.getMessage(), ex);
+            throw new DataAccessErrorExceptionHandler("Failed to fetch secret questions and answers");
+        } catch (Exception ex) {
+            LOGGER.error("Unexpected error while fetching secret questions and answers: {}", ex.getMessage(), ex);
+            throw new InternalServerErrorExceptionHandler("Unexpected error occurred while fetching secret questions and answers");
+        }
+    }
 }

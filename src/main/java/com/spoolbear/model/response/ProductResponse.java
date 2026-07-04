@@ -21,15 +21,19 @@ public class ProductResponse {
     private Integer stockQuantity;
     private Boolean isCustomizable;
 
+    private Boolean isWish = false;
+
     private Long typeId;
     private String typeName;
 
     private Long materialId;
     private String materialName;
     private String materialDescription;
+    private String materialType;
 
     private Long categoryId;
     private String categoryName;
+    private List<String> colors;
     private List<ProductImage> images;
 
     @Data
